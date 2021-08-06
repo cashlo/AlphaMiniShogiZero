@@ -1,9 +1,13 @@
-from enum import Enum
+from enum import Enum, auto
 
 class MiniShogi:
 	SIZE = 5
 	class Game():
 		def __init__(self):
+			self.player_kings = [
+				MiniShogi.Piece(MiniShogi.PieceType.KING, 4, 0, False, 0),
+				MiniShogi.Piece(MiniShogi.PieceType.KING, 0, 4, False, 1)
+			]
 			self.player_pieces = [[], []]
 			self.board = MiniShogi.Board(MiniShogi.SIZE)
 			
@@ -11,14 +15,14 @@ class MiniShogi:
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.BISHOP, 1, 0, False, 0))
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.SILVER, 2, 0, False, 0))
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.GOLD,   3, 0, False, 0))
-			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   4, 0, False, 0))
+			self.place_piece(self.player_kings[0])
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.PAWN,   4, 1, False, 0))
 
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.ROOK,   4, 4, False, 1))
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.BISHOP, 3, 4, False, 1))
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.SILVER, 2, 4, False, 1))
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.GOLD,   1, 4, False, 1))
-			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   0, 4, False, 1))
+			self.place_piece(self.player_kings[1])
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.PAWN,   0, 3, False, 1))
 
 		def place_piece(self, piece):
@@ -45,6 +49,57 @@ class MiniShogi:
 		def place_piece(self, piece):
 			self.board[piece.position[0]][piece.position[1]] = piece
 
+		def player_attack_area(self, player):
+			area = set()
+			for piece in self.player_pieces[player]:
+				area.update(p.get_moves(self))
+			return area
+
+		def between(self, position1, position2):
+			directions = [(-1,-1), (-1,0), (-1, 1), (0,-1), (0,1), (1,-1), (1,0), (1,1)]
+			for d in directions:
+				line_between = set()
+				new_position = ( position1[0], position1[1] )
+				while new_position := ( new_position[0] + d[0], new_position[1] + d[1] ):
+					if not self.is_position_on_board(new_position):
+						break
+					if new_position == position2:
+						return line_between
+					line_between.add(new_position)
+			raise ValueError('Not on a line')
+
+
+
+		def check_board(self, current_player):
+			other_player = current_player%2
+
+			king_attacking_pieces = []
+
+			for p in self.player_pieces[other_player]:
+				if self.player_kings[current_player].position in p.get_moves(self):
+					king_attacking_pieces.append(p)
+
+			if not king_attacking_pieces:
+				return (MiniShogi.State.IN_PROGRESS, None)
+
+			other_player_attack_area_set = set(self.player_attack_area(other_player))
+			current_player_attack_area_set = set(self.player_attack_area(other_player))
+
+			if set(self.player_kings[current_player].get_moves(self)) - other_player_attack_area_set:
+				return (MiniShogi.State.IN_PROGRESS, None)
+			if len(king_attacking_pieces) == 1:
+				if king_attacking_pieces[0].position in current_player_attack_area_set:
+					return (MiniShogi.State.IN_PROGRESS, None)
+				if self.between(
+						self.player_kings[current_player].position,
+						king_attacking_pieces[0].position
+					).intersection(current_player_attack_area_set):
+					return (MiniShogi.State.IN_PROGRESS, None)
+			return (MiniShogi.State.CHECKMATE, other_player)
+
+
+
+
 		def print(self):
 			ranks = ['']*self.size
 			for file in self.board:
@@ -64,8 +119,20 @@ class MiniShogi:
 			self.player = player
 
 		def get_moves(self, board):
-			moveType = self.pieceType.promotion() if self.promoted else self.pieceType
 			valid_moves = []
+			if self.position is None:
+				if self.pieceType != MiniShogi.PieceType.PAWN:
+					for f in range(MiniShogi.SIZE):
+						for r in range(MiniShogi.SIZE):
+							if board.piece_at( (f, r) ) is None:
+								valid_moves.append( (f, r) )
+					return valid_moves
+				else:
+					# TODE: Pawn drop
+					pass
+
+			moveType = self.pieceType.promotion() if self.promoted else self.pieceType
+			
 
 			for m in moveType.short_moves():
 				new_position = ( self.position[0] + m[0], self.position[1] + m[1] )
@@ -86,9 +153,12 @@ class MiniShogi:
 						break
 					valid_moves.append(new_position)
 
-			return valid_moves		
+			return valid_moves
 
-
+	class State(Enum):
+		IN_PROGRESS	= auto()
+		CHECKMATE   = auto()
+		
 
 	class PieceType(Enum):
 		KING   = '王'

@@ -55,9 +55,8 @@ class GameWindow:
 			margin_size+(piece.position[1]+1/2)*row_height,
 			text=piece.pieceType.value,
 			font=font,
-			angle=0 if piece.player else 180
+			angle=0  if piece.player else 180
 		)
-
 
 	def draw_board(self, board):
 		for file in board.board:
