@@ -1,5 +1,6 @@
 from enum import Enum, auto
 from collections import defaultdict
+import random
 
 class MiniShogi:
 	SIZE = 5
@@ -42,6 +43,7 @@ class MiniShogi:
 				capturing_piece.position = None
 				self.player_pieces[player].append(capturing_piece)
 			self.board.make_move(piece, move)
+			self.current_player = 1-self.current_player
 
 
 		def player_attack_area(self, player):
@@ -61,6 +63,14 @@ class MiniShogi:
 				if self.player_kings[player].position in attacking_moves:
 					king_attacking_pieces.add(p)
 			return king_attacking_pieces
+
+		def random_move(self):
+			move_options = []
+			move_dict = self.all_legal_moves(self.current_player)
+			for p in move_dict:
+				move_options.extend( (p, m) for m in move_dict[p] )
+			return random.sample(move_options, 1)[0]
+
 
 		def all_legal_moves(self, player):
 			other_player = 1-player

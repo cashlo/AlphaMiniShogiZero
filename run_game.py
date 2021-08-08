@@ -19,6 +19,10 @@ def on_click(x, y):
 			if (x, y) in legal_moves[last_clicked_piece]:
 				game.make_move(last_clicked_piece, (x, y))
 				window.draw_board(game)
+				piece, move = game.random_move()
+				game.make_move(piece, move)
+				window.draw_board(game)
+				
 			last_clicked_piece = None
 		return
 
