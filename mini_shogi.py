@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from collections import defaultdict
 
 class MiniShogi:
 	SIZE = 5
@@ -29,6 +30,44 @@ class MiniShogi:
 			self.player_pieces[piece.player].append(piece)
 			self.board.place_piece(piece)
 
+		def king_attacking_moves(self, player):
+			other_player = player%2
+
+			king_attacking_moves = defaultdict(list)
+
+			for p in self.player_pieces[other_player]:
+				attacking_moves = p.get_moves(self.board)
+				if self.player_kings[player].position in attacking_moves:
+					king_attacking_moves[p].append( attacking_moves )
+			return king_attacking_moves
+
+		def all_possible_moves(self, player):
+			king_attacking_moves = self.king_attacking_moves(player)
+			king_attacking_move_set = set()
+
+			for p, moves in king_attacking_moves:
+				king_attacking_move_set.update(moves)
+
+			possible_moves = defaultdict(list)
+			if king_attacking_moves:
+				king_move_set = set(self.player_kings[player].get_moves(self.board))
+				if king_move_set - king_attacking_move_set:
+					possible_moves[self.player_kings[player]].append(king_move_set - king_attacking_move_set)
+				if len(king_attacking_moves) > 1:
+					return possible_moves
+				king_attacking_piece = king_attacking_moves.keys()[0]
+				for p in self.player_pieces[player]:
+					moves = p.get_moves(self.board)
+					for m in moves:
+						if m == king_attacking_piece.position or m in king_attacking_move_set:
+							possible_moves[p].append(m)
+				return possible_moves
+			else:
+				for p in self.player_pieces[player]:
+					for m in p.get_moves(self.board):
+						possible_moves[p].append(m)
+				return possible_moves
+			
 
 
 	class Board():
@@ -97,9 +136,6 @@ class MiniShogi:
 					return (MiniShogi.State.IN_PROGRESS, None)
 			return (MiniShogi.State.CHECKMATE, other_player)
 
-
-
-
 		def print(self):
 			ranks = ['']*self.size
 			for file in self.board:
@@ -135,6 +171,8 @@ class MiniShogi:
 			
 
 			for m in moveType.short_moves():
+				if self.player == 0:
+					m = (m[0], -m[1])
 				new_position = ( self.position[0] + m[0], self.position[1] + m[1] )
 				if not board.is_position_on_board(new_position):
 					continue
@@ -176,9 +214,9 @@ class MiniShogi:
 				MiniShogi.PieceType.KING: [(-1,-1), (-1,0), (-1, 1), (0,-1), (0,1), (1,-1), (1,0), (1,1)],
 				MiniShogi.PieceType.ROOK: [],
 				MiniShogi.PieceType.BISHOP: [],
-				MiniShogi.PieceType.GOLD: [(-1,-1), (-1,0), (-1, 1), (0,-1), (0,1), (1,0)],
-				MiniShogi.PieceType.SILVER: [(-1,-1), (-1,0), (-1, 1), (0,-1), (0,1), (1,-1), (1,1)],
-				MiniShogi.PieceType.PAWN: [(-1, 0)],
+				MiniShogi.PieceType.GOLD: [(-1,-1), (0,-1), (1, -1), (-1, 0), (1, 0), (0, 1)],
+				MiniShogi.PieceType.SILVER: [(-1,-1), (0,-1), (1, -1), (-1, 1), (1, 1)],
+				MiniShogi.PieceType.PAWN: [(0, -1)],
 				MiniShogi.PieceType.DRAGON: [(-1,-1), (-1, 1), (1,-1), (1,1)],
 				MiniShogi.PieceType.HORSE: [(-1,0), (0,-1), (0,1), (1,0)]
 			}[self]
