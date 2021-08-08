@@ -4,7 +4,7 @@ import tkinter.font as tkFont
 from mini_shogi import MiniShogi
 
 class GameWindow:
-	def __init__(self, title='', canvas_size=600, font_size=20, line_width=2, show_title=True):
+	def __init__(self, title='', canvas_size=600, font_size=20, line_width=2, show_title=True, on_click=None):
 		self.window = Tk()
 		self.window.title(title)
 		self.window.configure(bg="black")
@@ -22,6 +22,7 @@ class GameWindow:
 		self.row_height = (self.canvas_size - self.margin_size*2)/MiniShogi.SIZE
 
 		self.canvas = Canvas(self.window, width=self.canvas_size, height=self.canvas_size, bg="#964B00")
+		self.canvas.bind('<Button-1>', self.click)
 		self.line_width=line_width
 		self.draw_lines()
 		self.canvas.pack()
@@ -29,8 +30,15 @@ class GameWindow:
 		self.status_label = Label(self.window, text='', bg="black", fg="white", font=self.font_style)
 		self.status_label.pack()
 
+		self.on_click = on_click
 		
 		self.window.update()
+
+	def click(self, event):
+		x = int((event.x-self.margin_size)//self.row_height)
+		y = int((event.y-self.margin_size)//self.row_height)
+		self.on_click(x, y)
+
 
 	def draw_lines(self):		
 		for i in range(MiniShogi.SIZE+1):

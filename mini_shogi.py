@@ -30,42 +30,70 @@ class MiniShogi:
 			self.player_pieces[piece.player].append(piece)
 			self.board.place_piece(piece)
 
-		def king_attacking_moves(self, player):
-			other_player = player%2
+		def make_move(self, piece, move):
+			print("game.make_move", piece, move)
+			player = piece.player
+			capturing_piece = self.board.piece_at(move)
+			if capturing_piece is not None:
+				self.player_pieces[capturing_piece.player].remove(capturing_piece)
+				capturing_piece.promoted = False
+				capturing_piece.player = player
+				capturing_piece.position = None
+				self.player_pieces[player].append(capturing_piece)
+			self.board.make_move(piece, move)
 
-			king_attacking_moves = defaultdict(list)
+
+		def player_attack_area(self, player):
+			area = set()
+			for piece in self.player_pieces[player]:
+				if piece.position is not None:
+					area.update(piece.get_moves(self.board))
+			return area
+
+		def king_attacking_moves(self, player):
+			other_player = 1-player
+
+			king_attacking_moves = defaultdict(set)
 
 			for p in self.player_pieces[other_player]:
 				attacking_moves = p.get_moves(self.board)
 				if self.player_kings[player].position in attacking_moves:
-					king_attacking_moves[p].append( attacking_moves )
+					king_attacking_moves[p].update( attacking_moves )
 			return king_attacking_moves
 
-		def all_possible_moves(self, player):
+		def all_legal_moves(self, player):
+			other_player = 1-player
+			player_king = self.player_kings[player]
 			king_attacking_moves = self.king_attacking_moves(player)
 			king_attacking_move_set = set()
+			other_player_attack_area_set = self.player_attack_area(other_player)
 
-			for p, moves in king_attacking_moves:
-				king_attacking_move_set.update(moves)
+			for p in king_attacking_moves:
+				print(king_attacking_moves[p])
+				king_attacking_move_set.update(king_attacking_moves[p])
 
-			possible_moves = defaultdict(list)
+			possible_moves = defaultdict(set)
 			if king_attacking_moves:
-				king_move_set = set(self.player_kings[player].get_moves(self.board))
-				if king_move_set - king_attacking_move_set:
-					possible_moves[self.player_kings[player]].append(king_move_set - king_attacking_move_set)
+				king_move_set = set(player_king.get_moves(self.board))
+				if king_move_set - other_player_attack_area_set:
+					possible_moves[player_king].update(king_move_set - other_player_attack_area_set)
 				if len(king_attacking_moves) > 1:
 					return possible_moves
-				king_attacking_piece = king_attacking_moves.keys()[0]
+				king_attacking_piece = list(king_attacking_moves.keys())[0]
 				for p in self.player_pieces[player]:
+					if p == player_king:
+						continue
 					moves = p.get_moves(self.board)
 					for m in moves:
-						if m == king_attacking_piece.position or m in king_attacking_move_set:
-							possible_moves[p].append(m)
+						if m == king_attacking_piece.position or m in self.board.between(player_king, king_attacking_piece):
+							possible_moves[p].add(m)
 				return possible_moves
 			else:
 				for p in self.player_pieces[player]:
-					for m in p.get_moves(self.board):
-						possible_moves[p].append(m)
+					if p == player_king:
+						possible_moves[p].update( p.get_moves(self.board) - other_player_attack_area_set )
+					else:
+						possible_moves[p].update( p.get_moves(self.board) )
 				return possible_moves
 			
 
@@ -88,13 +116,17 @@ class MiniShogi:
 		def place_piece(self, piece):
 			self.board[piece.position[0]][piece.position[1]] = piece
 
-		def player_attack_area(self, player):
-			area = set()
-			for piece in self.player_pieces[player]:
-				area.update(p.get_moves(self))
-			return area
+		def make_move(self, piece, move):
+			print("board.make_move", piece, move)
+			player = piece.player
+			self.board[piece.position[0]][piece.position[1]] = None
+			self.board[move[0]][move[1]] = piece
+			piece.position = move
 
-		def between(self, position1, position2):
+		def between(self, piece1, piece2):
+			position1 = piece1.position
+			position2 = piece2.position
+
 			directions = [(-1,-1), (-1,0), (-1, 1), (0,-1), (0,1), (1,-1), (1,0), (1,1)]
 			for d in directions:
 				line_between = set()
@@ -110,7 +142,7 @@ class MiniShogi:
 
 
 		def check_board(self, current_player):
-			other_player = current_player%2
+			other_player = 1-current_player
 
 			king_attacking_pieces = []
 
@@ -155,17 +187,18 @@ class MiniShogi:
 			self.player = player
 
 		def get_moves(self, board):
-			valid_moves = []
+			valid_moves = set()
 			if self.position is None:
 				if self.pieceType != MiniShogi.PieceType.PAWN:
 					for f in range(MiniShogi.SIZE):
 						for r in range(MiniShogi.SIZE):
 							if board.piece_at( (f, r) ) is None:
-								valid_moves.append( (f, r) )
+								valid_moves.add( (f, r) )
 					return valid_moves
 				else:
-					# TODE: Pawn drop
+					# TODO: Pawn drop
 					pass
+				return valid_moves
 
 			moveType = self.pieceType.promotion() if self.promoted else self.pieceType
 			
@@ -178,7 +211,7 @@ class MiniShogi:
 					continue
 				if board.piece_at(new_position) != None and self.player == board.piece_at(new_position).player:
 					continue
-				valid_moves.append(new_position)
+				valid_moves.add(new_position)
 
 			for m in moveType.long_moves():
 				new_position = ( self.position[0], self.position[1] )
@@ -187,9 +220,9 @@ class MiniShogi:
 						break
 					if board.piece_at(new_position) != None:
 						if self.player != board.piece_at(new_position).player:
-							valid_moves.append(new_position)
+							valid_moves.add(new_position)
 						break
-					valid_moves.append(new_position)
+					valid_moves.add(new_position)
 
 			return valid_moves
 
