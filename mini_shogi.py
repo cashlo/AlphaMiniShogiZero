@@ -9,6 +9,7 @@ class MiniShogi:
 				MiniShogi.Piece(MiniShogi.PieceType.KING, 4, 0, False, 0),
 				MiniShogi.Piece(MiniShogi.PieceType.KING, 0, 4, False, 1)
 			]
+			self.current_player = 1
 			self.player_pieces = [[], []]
 			self.board = MiniShogi.Board(MiniShogi.SIZE)
 			
@@ -50,36 +51,31 @@ class MiniShogi:
 					area.update(piece.get_moves(self.board))
 			return area
 
-		def king_attacking_moves(self, player):
+		def king_attacking_pieces(self, player):
 			other_player = 1-player
 
-			king_attacking_moves = defaultdict(set)
+			king_attacking_pieces = set()
 
 			for p in self.player_pieces[other_player]:
 				attacking_moves = p.get_moves(self.board)
 				if self.player_kings[player].position in attacking_moves:
-					king_attacking_moves[p].update( attacking_moves )
-			return king_attacking_moves
+					king_attacking_pieces.add(p)
+			return king_attacking_pieces
 
 		def all_legal_moves(self, player):
 			other_player = 1-player
 			player_king = self.player_kings[player]
-			king_attacking_moves = self.king_attacking_moves(player)
-			king_attacking_move_set = set()
+			king_attacking_pieces = self.king_attacking_pieces(player)
 			other_player_attack_area_set = self.player_attack_area(other_player)
 
-			for p in king_attacking_moves:
-				print(king_attacking_moves[p])
-				king_attacking_move_set.update(king_attacking_moves[p])
-
 			possible_moves = defaultdict(set)
-			if king_attacking_moves:
+			if king_attacking_pieces:
 				king_move_set = set(player_king.get_moves(self.board))
 				if king_move_set - other_player_attack_area_set:
 					possible_moves[player_king].update(king_move_set - other_player_attack_area_set)
-				if len(king_attacking_moves) > 1:
+				if len(king_attacking_pieces) > 1:
 					return possible_moves
-				king_attacking_piece = list(king_attacking_moves.keys())[0]
+				king_attacking_piece = list(king_attacking_pieces)[0]
 				for p in self.player_pieces[player]:
 					if p == player_king:
 						continue
@@ -119,7 +115,8 @@ class MiniShogi:
 		def make_move(self, piece, move):
 			print("board.make_move", piece, move)
 			player = piece.player
-			self.board[piece.position[0]][piece.position[1]] = None
+			if piece.position is not None:
+				self.board[piece.position[0]][piece.position[1]] = None
 			self.board[move[0]][move[1]] = piece
 			piece.position = move
 

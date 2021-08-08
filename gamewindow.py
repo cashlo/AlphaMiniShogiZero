@@ -18,7 +18,7 @@ class GameWindow:
 		self.render_counter = 0
 
 		self.canvas_size = 600
-		self.margin_size = self.canvas_size/20
+		self.margin_size = self.canvas_size/7
 		self.row_height = (self.canvas_size - self.margin_size*2)/MiniShogi.SIZE
 
 		self.canvas = Canvas(self.window, width=self.canvas_size, height=self.canvas_size, bg="#964B00")
@@ -57,6 +57,47 @@ class GameWindow:
 				width=self.line_width
 			)
 
+	def piece_to_capture_position(piece):
+		if piece.player == 0:
+			return {
+				MiniShogi.PieceType.KING:   (2, -1),
+				MiniShogi.PieceType.ROOK:   (-1, 0),
+				MiniShogi.PieceType.BISHOP: (-1, 1),
+				MiniShogi.PieceType.GOLD:   (-1, 2),
+				MiniShogi.PieceType.SILVER: (-1, 3),
+				MiniShogi.PieceType.PAWN:   (-1, 4),
+			}[piece.pieceType]
+		else:
+			return {
+				MiniShogi.PieceType.KING:   (2, 5),
+				MiniShogi.PieceType.ROOK:   (5, 4),
+				MiniShogi.PieceType.BISHOP: (5, 3),
+				MiniShogi.PieceType.GOLD:   (5, 2),
+				MiniShogi.PieceType.SILVER: (5, 1),
+				MiniShogi.PieceType.PAWN:   (5, 0),
+			}[piece.pieceType]
+
+	def capture_position_to_piece(game, position):
+		player, piece_type = {
+			(2,  -1): (0, MiniShogi.PieceType.KING),
+			(-1,  0): (0, MiniShogi.PieceType.ROOK),
+			(-1,  1): (0, MiniShogi.PieceType.BISHOP),
+			(-1,  2): (0, MiniShogi.PieceType.GOLD),
+			(-1,  3): (0, MiniShogi.PieceType.SILVER),
+			(-1, -4): (0, MiniShogi.PieceType.PAWN),
+			(2,   5): (1, MiniShogi.PieceType.KING),
+			(5,   4): (1, MiniShogi.PieceType.ROOK),
+			(5,   3): (1, MiniShogi.PieceType.BISHOP),
+			(5,   2): (1, MiniShogi.PieceType.GOLD),
+			(5,   1): (1, MiniShogi.PieceType.SILVER),
+			(5,   0): (1, MiniShogi.PieceType.PAWN)
+		}[position]
+
+		for p in game.player_pieces[player]:
+			if p.pieceType == piece_type and p.position is None:
+				return p
+
+
 	def draw_piece(self, piece):
 		if piece is None:
 			return
@@ -65,7 +106,8 @@ class GameWindow:
 		points = [1/2, 1/10, 8/10, 2/10, 9/10, 9/10, 1/10, 9/10, 2/10, 2/10, 1/2, 1/10]
 		if piece.player == 0:
 			points = [1-p if i%2 else p for i, p in enumerate(points)]
-		points = [self.margin_size+(piece.position[i%2]+p)*row_height for i, p in enumerate(points)]
+		position = piece.position if piece.position is not None else GameWindow.piece_to_capture_position(piece)
+		points = [self.margin_size+(position[i%2]+p)*row_height for i, p in enumerate(points)]
 		self.canvas.create_polygon(
 			points,
 			fill="#FFD167",
@@ -73,8 +115,8 @@ class GameWindow:
 		)
 		font = tkFont.Font(size=40)
 		self.canvas.create_text(
-			self.margin_size+(piece.position[0]+1/2)*row_height,
-			self.margin_size+(piece.position[1]+1/2)*row_height,
+			self.margin_size+(position[0]+1/2)*row_height,
+			self.margin_size+(position[1]+1/2)*row_height,
 			text=piece.pieceType.value,
 			font=font,
 			tags = "piece",
@@ -95,12 +137,12 @@ class GameWindow:
 				tags='move'
 			)
 
-	def draw_board(self, board):
+	def draw_board(self, game):
 		self.canvas.delete('piece')
 		self.canvas.delete('move')
 
-		for file in board.board:
-			for piece in file:
+		for player_pieces in game.player_pieces:
+			for piece in player_pieces:
 				self.draw_piece(piece)
 
 	def mainloop(self):
