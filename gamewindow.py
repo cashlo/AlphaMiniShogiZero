@@ -89,7 +89,7 @@ class GameWindow:
 			(-1,  1): (0, MiniShogi.PieceType.BISHOP),
 			(-1,  2): (0, MiniShogi.PieceType.GOLD),
 			(-1,  3): (0, MiniShogi.PieceType.SILVER),
-			(-1, -4): (0, MiniShogi.PieceType.PAWN),
+			(-1,  4): (0, MiniShogi.PieceType.PAWN),
 			(2,   5): (1, MiniShogi.PieceType.KING),
 			(5,   4): (1, MiniShogi.PieceType.ROOK),
 			(5,   3): (1, MiniShogi.PieceType.BISHOP),

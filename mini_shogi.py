@@ -33,7 +33,6 @@ class MiniShogi:
 			self.board.place_piece(piece)
 
 		def make_move(self, piece, move):
-			print("game.make_move", piece, move)
 			player = piece.player
 			capturing_piece = self.board.piece_at(move)
 			if capturing_piece is not None:
@@ -60,13 +59,6 @@ class MiniShogi:
 					return king.player
 			return None
 
-		def player_attack_area(self, player, ignore_piece = None):
-			area = set()
-			for piece in self.player_pieces[player]:
-				if piece.position is not None:
-					area.update(piece.get_moves(self.board, True, ignore_piece))
-			return area
-
 		def king_attacking_pieces(self, player):
 			other_player = 1-player
 
@@ -84,13 +76,12 @@ class MiniShogi:
 			other_player = 1-player
 			player_king = self.player_kings[player]
 			king_attacking_pieces = self.king_attacking_pieces(player)
-			other_player_attack_area_set = self.player_attack_area(other_player, player_king)
+			other_player_attack_area_set = self.board.player_attack_area(other_player, player_king)
 
 			possible_moves = defaultdict(set)
 			if king_attacking_pieces:
 				king_move_set = set(player_king.get_moves(self.board, True))
 				king_move_set -= other_player_attack_area_set
-				print( other_player_attack_area_set )
 				if king_move_set:
 					possible_moves[player_king].update({ (m[0], m[1], False) for m in king_move_set })
 				if len(king_attacking_pieces) > 1:
@@ -133,8 +124,22 @@ class MiniShogi:
 		def place_piece(self, piece):
 			self.board[piece.position[0]][piece.position[1]] = piece
 
+		def player_attack_area(self, player, ignore_piece = None, skip_piece = None):
+			area = set()
+
+			for f in range(MiniShogi.SIZE):
+				for r in range(MiniShogi.SIZE):
+					board_piece = self.piece_at( (f, r) )
+					if board_piece is None:
+						continue
+					if board_piece.player != player:
+						continue
+					if board_piece == skip_piece:
+						continue
+					area.update(board_piece.get_moves(self, True, ignore_piece))
+			return area
+
 		def make_move(self, piece, move):
-			print("board.make_move", piece, move)
 			player = piece.player
 			if piece.position is not None:
 				self.board[piece.position[0]][piece.position[1]] = None
@@ -213,8 +218,31 @@ class MiniShogi:
 					return 'と'
 				return self.pieceType.promotion().value
 
+		def pawn_drop_checkmate(self, drop_position, board):
+			if self.player == 0:
+				check_positon = (drop_position[0], drop_position[1]+1)
+			else:
+				check_positon = (drop_position[0], drop_position[1]-1)
+			check_piece = board.piece_at( check_positon )
+			if check_piece is None:
+				return False
+			if check_piece.pieceType != MiniShogi.PieceType.KING:
+				return False
+
+			player_attack_area = board.player_attack_area(self.player)
+			if check_piece.get_moves(board, True) - player_attack_area:
+				print("Their king can move")
+				return False
+			if drop_position in board.player_attack_area(1-self.player, skip_piece=check_piece):
+				print("The drop pawn can be taken their other pieces")
+				return False
+			if drop_position not in player_attack_area:
+				print("The pawn can be taken by their king")
+				return False
+			return True
+
+
 		def get_moves(self, board, position_only = False, ignore_piece = None):
-			print("get_moves: ", self.get_name(), position_only, ignore_piece)
 			valid_moves = set()
 			if self.position is None:
 				if self.pieceType != MiniShogi.PieceType.PAWN:
@@ -222,12 +250,30 @@ class MiniShogi:
 						for r in range(MiniShogi.SIZE):
 							if board.piece_at( (f, r) ) is None:
 								valid_moves.add( (f, r, False) )
-					if position_only:
-						return { (m[0], m[1]) for m in valid_moves}
-					return valid_moves
 				else:
-					# TODO: Pawn drop
-					pass
+					no_drop_ranks = set()
+					no_drop_files = set()
+					if self.player == 0:
+						no_drop_ranks.add(4)
+					else:
+						no_drop_ranks.add(0)
+
+					for f in range(MiniShogi.SIZE):
+						for r in range(MiniShogi.SIZE):
+							board_piece = board.piece_at( (f, r) )
+							if board_piece is None:
+								continue
+							if board_piece.pieceType == MiniShogi.PieceType.PAWN and board_piece.player == self.player:
+								no_drop_files.add(f)
+
+					for f in range(MiniShogi.SIZE):
+						if f in no_drop_files:
+							continue
+						for r in range(MiniShogi.SIZE):
+							if r in no_drop_ranks:
+								continue
+							if board.piece_at( (f, r) ) is None and not self.pawn_drop_checkmate((f, r), board):
+								valid_moves.add( (f, r, False) )
 				if position_only:
 					return { (m[0], m[1]) for m in valid_moves}
 				return valid_moves
