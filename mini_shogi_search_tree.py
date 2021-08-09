@@ -12,7 +12,7 @@ class MiniShogiSearchTree(Node):
 		move_count = 0
 		while simulation_game.check_game_over() is None:
 			move = simulation_game.random_move()
-			print("move_count: ", move_count)
+			# print("move_count: ", move_count)
 			simulation_game.board_check()
 			simulation_game.make_move(move)
 			if self.gui:
@@ -25,7 +25,7 @@ class MiniShogiSearchTree(Node):
 		return -1 if self.game.current_player == winner else 1
 
 	def create_from_move(self, move):
-		print("create_from_move: ", move)
+		# print("create_from_move: ", move)
 		# if piece_move in self.expanded_children:
 		# 	return self.expanded_children[piece_move]
 

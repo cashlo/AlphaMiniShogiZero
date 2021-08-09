@@ -39,7 +39,7 @@ def on_click(x, y, promotion):
 	# 	return
 	last_clicked_piece = p
 	legal_moves = game.all_legal_moves(p.player)
-	print(legal_moves)
+	# print(legal_moves)
 	window.draw_moves(legal_moves, p)
 
 def make_random_move():

@@ -20,7 +20,7 @@ class Node:
 		start_time = time()
 		#past_nodes = []
 		while simulation_count < self.simulation_limit:
-			print("simulation_count:", simulation_count)
+			# print("simulation_count:", simulation_count)
 			next_node = self.pick_next_node(self.exploration_constant)
 			reward = next_node.rollout()
 			next_node.backup(reward)
@@ -29,6 +29,9 @@ class Node:
 		# self.print('')
 		# code.interact(local=locals())
 		# print(f"Number of sumulation: {simulation_count}")
+		print("=================")
+		for move in self.expanded_children:
+			print(move, self.expanded_children[move].reward, self.expanded_children[move].visit_count)
 		return self.best_UCB_child(0)
 
 	def expand_last_move(self):
