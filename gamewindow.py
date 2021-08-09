@@ -128,14 +128,17 @@ class GameWindow:
 			angle=0  if piece.player else 180
 		)
 
-	def draw_moves(self, moves):
+	def draw_moves(self, moves, piece):
 		self.canvas.delete('move')
 		for m in moves:
+			piece_type, old_position, new_position, promoted = m
+			if piece.pieceType != piece_type or piece.position != old_position:
+				continue
 			self.canvas.create_rectangle(
-				self.margin_size+m[0]*self.row_height,
-				self.margin_size+m[1]*self.row_height,
-				self.margin_size+(m[0]+1)*self.row_height,
-				self.margin_size+(m[1]+1)*self.row_height,
+				self.margin_size+new_position[0]*self.row_height,
+				self.margin_size+new_position[1]*self.row_height,
+				self.margin_size+(new_position[0]+1)*self.row_height,
+				self.margin_size+(new_position[1]+1)*self.row_height,
 				outline='red',
 				width=5,
 				# dash=(4, 4),
@@ -149,6 +152,7 @@ class GameWindow:
 		for player_pieces in game.player_pieces:
 			for piece in player_pieces:
 				self.draw_piece(piece)
+		self.window.update()
 
 	def mainloop(self):
 		self.window.mainloop()

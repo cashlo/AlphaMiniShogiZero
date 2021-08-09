@@ -1,58 +1,105 @@
 from enum import Enum, auto
 from collections import defaultdict
 import random
+import code
 
 class MiniShogi:
 	SIZE = 5
 	class Game():
 		def __init__(self):
-			self.player_kings = [
-				MiniShogi.Piece(MiniShogi.PieceType.KING, 4, 0, False, 0),
-				MiniShogi.Piece(MiniShogi.PieceType.KING, 0, 4, False, 1)
-			]
+			self.player_kings = [None, None]
 			self.current_player = 1
 			self.player_pieces = [[], []]
 			self.board = MiniShogi.Board(MiniShogi.SIZE)
-			
-			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.ROOK,   0, 0, False, 0))
-			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.BISHOP, 1, 0, False, 0))
-			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.SILVER, 2, 0, False, 0))
-			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.GOLD,   3, 0, False, 0))
-			self.place_piece(self.player_kings[0])
-			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.PAWN,   4, 1, False, 0))
+		
+		def setup(self):
+			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.ROOK,   (0, 0), False, 0))
+			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.BISHOP, (1, 0), False, 0))
+			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.SILVER, (2, 0), False, 0))
+			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.GOLD,   (3, 0), False, 0))
+			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   (4, 0), False, 0))
+			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.PAWN,   (4, 1), False, 0))
 
-			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.ROOK,   4, 4, False, 1))
-			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.BISHOP, 3, 4, False, 1))
-			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.SILVER, 2, 4, False, 1))
-			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.GOLD,   1, 4, False, 1))
-			self.place_piece(self.player_kings[1])
-			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.PAWN,   0, 3, False, 1))
+			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.ROOK,   (4, 4), False, 1))
+			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.BISHOP, (3, 4), False, 1))
+			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.SILVER, (2, 4), False, 1))
+			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.GOLD,   (1, 4), False, 1))
+			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   (0, 4), False, 1))
+			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.PAWN,   (0, 3), False, 1))
+
+		def board_check(self):
+			return
+			for player, pieces in enumerate(self.player_pieces):
+				for p in pieces:
+					if p.position is not None:
+						if self.board.piece_at(p.position) is not p:
+							self.print()
+							print(p.position)
+							raise ValueError('board mismatch!')
+
+		def print(self):
+			for player, pieces in enumerate(self.player_pieces):
+				print("Player", player)
+				for p in pieces:
+					print(p.get_name(), p.position)
+			
+			self.board.print()
+
+		def clone(self):
+			clone_game = MiniShogi.Game()
+			for player, pieces in enumerate(self.player_pieces):
+				for p in pieces:
+					clone_game.place_piece(p.clone())
+			clone_game.current_player = self.current_player
+			return clone_game
 
 		def place_piece(self, piece):
 			self.player_pieces[piece.player].append(piece)
-			self.board.place_piece(piece)
+			if piece.pieceType == MiniShogi.PieceType.KING:
+				self.player_kings[piece.player] = piece
+			if piece.position is not None:
+				self.board.place_piece(piece)
 
-		def make_move(self, piece, move):
+		def make_move(self, move):
+			piece_type, old_position, new_position, promoted = move
+			
+			piece = None
+			for p in self.player_pieces[self.current_player]:
+				if p.pieceType == piece_type and p.position == old_position:
+					piece = p
+					break
+
+			if piece is None:
+				raise ValueError('Piece not found!')
+
+			if self.current_player != piece.player:
+				raise ValueError('Not your piece!')
 			player = piece.player
-			capturing_piece = self.board.piece_at(move)
+			capturing_piece = self.board.piece_at(new_position)
 			if capturing_piece is not None:
+				if capturing_piece.player == piece.player:
+					print(piece.get_name())
+					print(move)
+					self.print()
+					raise ValueError('Capture own piece!')
+			
 				self.player_pieces[capturing_piece.player].remove(capturing_piece)
 				capturing_piece.promoted = False
 				capturing_piece.player = player
 				capturing_piece.position = None
 				self.player_pieces[player].append(capturing_piece)
-			self.board.make_move(piece, move)
+			self.board.make_move(piece, new_position, promoted)
 			self.current_player = 1-self.current_player
+			
+
+		def all_legal_move_list(self):
+			return list(self.all_legal_moves(self.current_player))
 
 		def random_move(self):
-			move_options = []
-			move_dict = self.all_legal_moves(self.current_player)
-			for p in move_dict:
-				move_options.extend( (p, m) for m in move_dict[p] )
-			return random.sample(move_options, 1)[0]
+			return random.sample(self.all_legal_move_list(), 1)[0]
 
 		def check_game_over(self):
-			if len(self.all_legal_moves(self.current_player)) == 0:
+			if len(self.all_legal_move_list()) == 0:
 				return 1-self.current_player
 			for king in self.player_kings:
 				if king.position is None:
@@ -78,12 +125,12 @@ class MiniShogi:
 			king_attacking_pieces = self.king_attacking_pieces(player)
 			other_player_attack_area_set = self.board.player_attack_area(other_player, player_king)
 
-			possible_moves = defaultdict(set)
+			possible_moves = set()
 			if king_attacking_pieces:
 				king_move_set = set(player_king.get_moves(self.board, True))
 				king_move_set -= other_player_attack_area_set
 				if king_move_set:
-					possible_moves[player_king].update({ (m[0], m[1], False) for m in king_move_set })
+					possible_moves.update({ (player_king.pieceType, player_king.position, m, False) for m in king_move_set })
 				if len(king_attacking_pieces) > 1:
 					return possible_moves
 				king_attacking_piece = list(king_attacking_pieces)[0]
@@ -93,15 +140,17 @@ class MiniShogi:
 					moves = p.get_moves(self.board)
 					for m in moves:
 						if (m[0], m[1]) == king_attacking_piece.position or (m[0], m[1]) in self.board.between(player_king, king_attacking_piece):
-							possible_moves[p].add(m)
+							possible_moves.add( (p.pieceType, p.position, (m[0], m[1]), m[2]) )
 
 				return possible_moves
 			else:
 				for p in self.player_pieces[player]:
 					if p == player_king:
-						possible_moves[p].update({ (m[0], m[1], False) for m in p.get_moves(self.board, True) - other_player_attack_area_set })
+						move_set = p.get_moves(self.board, True)
+						move_set -= other_player_attack_area_set
+						possible_moves.update({ (p.pieceType, p.position, m, False) for m in move_set })
 					else:
-						possible_moves[p].update( p.get_moves(self.board) )
+						possible_moves.update({ (p.pieceType, p.position, (m[0], m[1]), m[2]) for m in p.get_moves(self.board) })
 				return possible_moves
 			
 
@@ -139,13 +188,13 @@ class MiniShogi:
 					area.update(board_piece.get_moves(self, True, ignore_piece))
 			return area
 
-		def make_move(self, piece, move):
+		def make_move(self, piece, new_position, promoted):
 			player = piece.player
 			if piece.position is not None:
 				self.board[piece.position[0]][piece.position[1]] = None
-			self.board[move[0]][move[1]] = piece
-			piece.position = (move[0], move[1])
-			piece.promoted = piece.promoted or move[2]
+			self.board[new_position[0]][new_position[1]] = piece
+			piece.position = (new_position[0], new_position[1])
+			piece.promoted = piece.promoted or promoted
 
 		def between(self, piece1, piece2):
 			position1 = piece1.position
@@ -161,6 +210,7 @@ class MiniShogi:
 					if new_position == position2:
 						return line_between
 					line_between.add(new_position)
+			code.interact(local=locals())
 			raise ValueError('Not on a line')
 
 
@@ -204,11 +254,14 @@ class MiniShogi:
 				print(r)
 
 	class Piece():
-		def __init__(self, pieceType, x: int, y: int, promoted: bool, player: int):
+		def __init__(self, pieceType, position, promoted: bool, player: int):
 			self.pieceType = pieceType
-			self.position = (x, y)
+			self.position = position
 			self.promoted = promoted
 			self.player = player
+
+		def clone(self):
+			return MiniShogi.Piece(self.pieceType, self.position, self.promoted, self.player)
 
 		def get_name(self):
 			if not self.promoted:
@@ -231,13 +284,13 @@ class MiniShogi:
 
 			player_attack_area = board.player_attack_area(self.player)
 			if check_piece.get_moves(board, True) - player_attack_area:
-				print("Their king can move")
+				# print("Their king can move")
 				return False
 			if drop_position in board.player_attack_area(1-self.player, skip_piece=check_piece):
-				print("The drop pawn can be taken their other pieces")
+				# print("The drop pawn can be taken their other pieces")
 				return False
 			if drop_position not in player_attack_area:
-				print("The pawn can be taken by their king")
+				# print("The pawn can be taken by their king")
 				return False
 			return True
 
