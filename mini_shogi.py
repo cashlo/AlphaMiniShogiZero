@@ -60,11 +60,11 @@ class MiniShogi:
 					return king.player
 			return None
 
-		def player_attack_area(self, player):
+		def player_attack_area(self, player, ignore_piece = None):
 			area = set()
 			for piece in self.player_pieces[player]:
 				if piece.position is not None:
-					area.update(piece.get_moves(self.board))
+					area.update(piece.get_moves(self.board, True, ignore_piece))
 			return area
 
 		def king_attacking_pieces(self, player):
@@ -73,7 +73,7 @@ class MiniShogi:
 			king_attacking_pieces = set()
 
 			for p in self.player_pieces[other_player]:
-				attacking_moves = p.get_moves(self.board)
+				attacking_moves = p.get_moves(self.board, True)
 				if self.player_kings[player].position in attacking_moves:
 					king_attacking_pieces.add(p)
 			return king_attacking_pieces
@@ -84,13 +84,15 @@ class MiniShogi:
 			other_player = 1-player
 			player_king = self.player_kings[player]
 			king_attacking_pieces = self.king_attacking_pieces(player)
-			other_player_attack_area_set = self.player_attack_area(other_player)
+			other_player_attack_area_set = self.player_attack_area(other_player, player_king)
 
 			possible_moves = defaultdict(set)
 			if king_attacking_pieces:
-				king_move_set = set(player_king.get_moves(self.board))
-				if king_move_set - other_player_attack_area_set:
-					possible_moves[player_king].update(king_move_set - other_player_attack_area_set)
+				king_move_set = set(player_king.get_moves(self.board, True))
+				king_move_set -= other_player_attack_area_set
+				print( other_player_attack_area_set )
+				if king_move_set:
+					possible_moves[player_king].update({ (m[0], m[1], False) for m in king_move_set })
 				if len(king_attacking_pieces) > 1:
 					return possible_moves
 				king_attacking_piece = list(king_attacking_pieces)[0]
@@ -99,13 +101,14 @@ class MiniShogi:
 						continue
 					moves = p.get_moves(self.board)
 					for m in moves:
-						if m == king_attacking_piece.position or m in self.board.between(player_king, king_attacking_piece):
+						if (m[0], m[1]) == king_attacking_piece.position or (m[0], m[1]) in self.board.between(player_king, king_attacking_piece):
 							possible_moves[p].add(m)
+
 				return possible_moves
 			else:
 				for p in self.player_pieces[player]:
 					if p == player_king:
-						possible_moves[p].update( p.get_moves(self.board) - other_player_attack_area_set )
+						possible_moves[p].update({ (m[0], m[1], False) for m in p.get_moves(self.board, True) - other_player_attack_area_set })
 					else:
 						possible_moves[p].update( p.get_moves(self.board) )
 				return possible_moves
@@ -136,7 +139,7 @@ class MiniShogi:
 			if piece.position is not None:
 				self.board[piece.position[0]][piece.position[1]] = None
 			self.board[move[0]][move[1]] = piece
-			piece.position = move
+			piece.position = (move[0], move[1])
 			piece.promoted = piece.promoted or move[2]
 
 		def between(self, piece1, piece2):
@@ -210,7 +213,8 @@ class MiniShogi:
 					return 'と'
 				return self.pieceType.promotion().value
 
-		def get_moves(self, board):
+		def get_moves(self, board, position_only = False, ignore_piece = None):
+			print("get_moves: ", self.get_name(), position_only, ignore_piece)
 			valid_moves = set()
 			if self.position is None:
 				if self.pieceType != MiniShogi.PieceType.PAWN:
@@ -218,10 +222,14 @@ class MiniShogi:
 						for r in range(MiniShogi.SIZE):
 							if board.piece_at( (f, r) ) is None:
 								valid_moves.add( (f, r, False) )
+					if position_only:
+						return { (m[0], m[1]) for m in valid_moves}
 					return valid_moves
 				else:
 					# TODO: Pawn drop
 					pass
+				if position_only:
+					return { (m[0], m[1]) for m in valid_moves}
 				return valid_moves
 
 			moveType = self.pieceType.promotion() if self.promoted else self.pieceType
@@ -259,9 +267,11 @@ class MiniShogi:
 							valid_moves.remove( new_position )
 						valid_moves.add( (new_position[0], new_position[1], True) )
 
-					if capturing_piece != None:
+					if capturing_piece is not None and capturing_piece != ignore_piece:
 						break
 					
+			if position_only:
+				return { (m[0], m[1]) for m in valid_moves}
 			return valid_moves
 
 	class State(Enum):

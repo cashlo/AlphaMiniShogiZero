@@ -20,15 +20,15 @@ def on_click(x, y, promotion):
 			if (x, y, promotion) in legal_moves[last_clicked_piece]:
 				game.make_move(last_clicked_piece, (x, y, promotion))
 				window.draw_board(game)
-				piece, move = game.random_move()
-				game.make_move(piece, move)
-				window.draw_board(game)
+				# piece, move = game.random_move()
+				# game.make_move(piece, move)
+				# window.draw_board(game)
 				
 			last_clicked_piece = None
 		return
 
-	if p.player == 0:
-		return
+	# if p.player == 0:
+	# 	return
 	last_clicked_piece = p
 	legal_moves = game.all_legal_moves(p.player)
 	print(legal_moves[p])
