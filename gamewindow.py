@@ -37,7 +37,12 @@ class GameWindow:
 	def click(self, event):
 		x = int((event.x-self.margin_size)//self.row_height)
 		y = int((event.y-self.margin_size)//self.row_height)
-		self.on_click(x, y)
+
+		promotion = False
+		if y == 0:
+			if (event.x-self.margin_size)/self.row_height - x > 0.5:
+				promotion = True
+		self.on_click(x, y, promotion)
 
 
 	def draw_lines(self):		
@@ -117,7 +122,7 @@ class GameWindow:
 		self.canvas.create_text(
 			self.margin_size+(position[0]+1/2)*row_height,
 			self.margin_size+(position[1]+1/2)*row_height,
-			text=piece.pieceType.value,
+			text=piece.get_name(),
 			font=font,
 			tags = "piece",
 			angle=0  if piece.player else 180

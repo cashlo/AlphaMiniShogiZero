@@ -45,6 +45,20 @@ class MiniShogi:
 			self.board.make_move(piece, move)
 			self.current_player = 1-self.current_player
 
+		def random_move(self):
+			move_options = []
+			move_dict = self.all_legal_moves(self.current_player)
+			for p in move_dict:
+				move_options.extend( (p, m) for m in move_dict[p] )
+			return random.sample(move_options, 1)[0]
+
+		def check_game_over(self):
+			if len(self.all_legal_moves(self.current_player)) == 0:
+				return 1-self.current_player
+			for king in self.player_kings:
+				if king.position is None:
+					return king.player
+			return None
 
 		def player_attack_area(self, player):
 			area = set()
@@ -64,12 +78,6 @@ class MiniShogi:
 					king_attacking_pieces.add(p)
 			return king_attacking_pieces
 
-		def random_move(self):
-			move_options = []
-			move_dict = self.all_legal_moves(self.current_player)
-			for p in move_dict:
-				move_options.extend( (p, m) for m in move_dict[p] )
-			return random.sample(move_options, 1)[0]
 
 
 		def all_legal_moves(self, player):
@@ -129,6 +137,7 @@ class MiniShogi:
 				self.board[piece.position[0]][piece.position[1]] = None
 			self.board[move[0]][move[1]] = piece
 			piece.position = move
+			piece.promoted = piece.promoted or move[2]
 
 		def between(self, piece1, piece2):
 			position1 = piece1.position
@@ -148,32 +157,32 @@ class MiniShogi:
 
 
 
-		def check_board(self, current_player):
-			other_player = 1-current_player
+		# def check_board(self, current_player):
+		# 	other_player = 1-current_player
 
-			king_attacking_pieces = []
+		# 	king_attacking_pieces = []
 
-			for p in self.player_pieces[other_player]:
-				if self.player_kings[current_player].position in p.get_moves(self):
-					king_attacking_pieces.append(p)
+		# 	for p in self.player_pieces[other_player]:
+		# 		if self.player_kings[current_player].position in p.get_moves(self):
+		# 			king_attacking_pieces.append(p)
 
-			if not king_attacking_pieces:
-				return (MiniShogi.State.IN_PROGRESS, None)
+		# 	if not king_attacking_pieces:
+		# 		return (MiniShogi.State.IN_PROGRESS, None)
 
-			other_player_attack_area_set = set(self.player_attack_area(other_player))
-			current_player_attack_area_set = set(self.player_attack_area(other_player))
+		# 	other_player_attack_area_set = set(self.player_attack_area(other_player))
+		# 	current_player_attack_area_set = set(self.player_attack_area(other_player))
 
-			if set(self.player_kings[current_player].get_moves(self)) - other_player_attack_area_set:
-				return (MiniShogi.State.IN_PROGRESS, None)
-			if len(king_attacking_pieces) == 1:
-				if king_attacking_pieces[0].position in current_player_attack_area_set:
-					return (MiniShogi.State.IN_PROGRESS, None)
-				if self.between(
-						self.player_kings[current_player].position,
-						king_attacking_pieces[0].position
-					).intersection(current_player_attack_area_set):
-					return (MiniShogi.State.IN_PROGRESS, None)
-			return (MiniShogi.State.CHECKMATE, other_player)
+		# 	if set(self.player_kings[current_player].get_moves(self)) - other_player_attack_area_set:
+		# 		return (MiniShogi.State.IN_PROGRESS, None)
+		# 	if len(king_attacking_pieces) == 1:
+		# 		if king_attacking_pieces[0].position in current_player_attack_area_set:
+		# 			return (MiniShogi.State.IN_PROGRESS, None)
+		# 		if self.between(
+		# 				self.player_kings[current_player].position,
+		# 				king_attacking_pieces[0].position
+		# 			).intersection(current_player_attack_area_set):
+		# 			return (MiniShogi.State.IN_PROGRESS, None)
+		# 	return (MiniShogi.State.CHECKMATE, other_player)
 
 		def print(self):
 			ranks = ['']*self.size
@@ -193,6 +202,14 @@ class MiniShogi:
 			self.promoted = promoted
 			self.player = player
 
+		def get_name(self):
+			if not self.promoted:
+				return self.pieceType.value
+			else:
+				if self.pieceType == MiniShogi.PieceType.PAWN:
+					return 'と'
+				return self.pieceType.promotion().value
+
 		def get_moves(self, board):
 			valid_moves = set()
 			if self.position is None:
@@ -200,7 +217,7 @@ class MiniShogi:
 					for f in range(MiniShogi.SIZE):
 						for r in range(MiniShogi.SIZE):
 							if board.piece_at( (f, r) ) is None:
-								valid_moves.add( (f, r) )
+								valid_moves.add( (f, r, False) )
 					return valid_moves
 				else:
 					# TODO: Pawn drop
@@ -213,24 +230,38 @@ class MiniShogi:
 			for m in moveType.short_moves():
 				if self.player == 0:
 					m = (m[0], -m[1])
-				new_position = ( self.position[0] + m[0], self.position[1] + m[1] )
+				new_position = ( self.position[0] + m[0], self.position[1] + m[1], False )
 				if not board.is_position_on_board(new_position):
 					continue
 				if board.piece_at(new_position) != None and self.player == board.piece_at(new_position).player:
 					continue
 				valid_moves.add(new_position)
 
+				# Promotion option
+				if (self.player == 0 and new_position[1] == 4) or (self.player == 1 and new_position[1] == 0):
+					if self.pieceType == MiniShogi.PieceType.PAWN:
+						valid_moves.remove( new_position )
+					valid_moves.add( (new_position[0], new_position[1], True) )
+
 			for m in moveType.long_moves():
-				new_position = ( self.position[0], self.position[1] )
-				while new_position := ( new_position[0] + m[0], new_position[1] + m[1] ):
+				new_position = ( self.position[0], self.position[1], False )
+				while new_position := ( new_position[0] + m[0], new_position[1] + m[1], False ):
 					if not board.is_position_on_board(new_position):
 						break
-					if board.piece_at(new_position) != None:
-						if self.player != board.piece_at(new_position).player:
-							valid_moves.add(new_position)
+					capturing_piece = board.piece_at(new_position)
+					if capturing_piece != None and capturing_piece.player == self.player:
 						break
 					valid_moves.add(new_position)
 
+					# Promotion option
+					if (self.player == 0 and new_position[1] == 4) or (self.player == 1 and new_position[1] == 0):
+						if self.pieceType == MiniShogi.PieceType.PAWN:
+							valid_moves.remove( new_position )
+						valid_moves.add( (new_position[0], new_position[1], True) )
+
+					if capturing_piece != None:
+						break
+					
 			return valid_moves
 
 	class State(Enum):
