@@ -4,7 +4,7 @@ import random
 from time import time
 
 class Node:
-	def __init__(self, parent=None, from_move=None, simulation_limit=100, exploration_constant=1, reward_decay=1):
+	def __init__(self, parent=None, from_move=None, simulation_limit=1000, exploration_constant=1, reward_decay=1):
 		self.parent=parent
 		self.reward = 0
 		self.visit_count = 1

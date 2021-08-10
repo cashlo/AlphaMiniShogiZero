@@ -27,6 +27,7 @@ class MiniShogi:
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   (0, 4), False, 1))
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.PAWN,   (0, 3), False, 1))
 
+
 		def board_check(self):
 			return
 			for player, pieces in enumerate(self.player_pieces):
@@ -99,11 +100,13 @@ class MiniShogi:
 			return random.sample(self.all_legal_move_list(), 1)[0]
 
 		def check_game_over(self):
+			for player, king in enumerate(self.player_kings):
+				if king is None:
+					return 1-player
+				if king.position is None:
+					return 1-player
 			if len(self.all_legal_move_list()) == 0:
 				return 1-self.current_player
-			for king in self.player_kings:
-				if king.position is None:
-					return king.player
 			return None
 
 		def king_attacking_pieces(self, player):

@@ -12,6 +12,10 @@ search_tree = MiniShogiSearchTree(game.clone(), gui=sim_window)
 
 last_clicked_piece = None
 def on_click(x, y, promotion):
+	winner = game.check_game_over()
+	if winner is not None:
+		print("Winner is ", winner)
+		return
 	if not game.board.is_position_on_board( (x, y) ):
 		p = GameWindow.capture_position_to_piece(game, (x, y))
 	else:
@@ -28,6 +32,11 @@ def on_click(x, y, promotion):
 				game.make_move(clicked_move)
 				search_tree = search_tree.create_from_move( clicked_move )
 				window.draw_board(game)
+				winner = game.check_game_over()
+				if winner is not None:
+					print("Winner is ", winner)
+					return
+	
 				search_tree = search_tree.search()
 				move = search_tree.from_move
 				game.make_move(move)
@@ -35,8 +44,8 @@ def on_click(x, y, promotion):
 			last_clicked_piece = None
 		return
 
-	# if p.player == 0:
-	# 	return
+	if p.player == 0:
+	 	return
 	last_clicked_piece = p
 	legal_moves = game.all_legal_moves(p.player)
 	# print(legal_moves)

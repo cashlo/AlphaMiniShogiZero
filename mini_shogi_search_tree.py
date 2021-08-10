@@ -26,8 +26,8 @@ class MiniShogiSearchTree(Node):
 
 	def create_from_move(self, move):
 		# print("create_from_move: ", move)
-		# if piece_move in self.expanded_children:
-		# 	return self.expanded_children[piece_move]
+		if move in self.expanded_children:
+			return self.expanded_children[move]
 
 		self.game.board_check()
 		new_game = self.game.clone()
