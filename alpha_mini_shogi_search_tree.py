@@ -17,8 +17,10 @@ def setup_puzzle1():
 class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 
 		def __init__(self, game, model):
-			self.game = game
+			MiniShogiSearchTree.__init__(self, game)
 			self.model = model
+
+
 
 		def encode_input(self):
 			player_piece    = defaultdict(lambda: [np.zeros((MiniShogi.SIZE, MiniShogi.SIZE)), np.zeros((MiniShogi.SIZE, MiniShogi.SIZE))])
@@ -34,7 +36,8 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 					if p.position is None:
 						player_prisoner[p.pieceType][player] += np.ones((MiniShogi.SIZE, MiniShogi.SIZE))
 					else:
-						player_piece[p.pieceType][player][p.position[0]][p.position[1]] = 1
+						position = AlphaMiniShogiSearchTree.normalize_positon(p.position, player)
+						player_piece[p.pieceType][player][position[0]][position[1]] = 1
 
 
 			plane_stack = []
@@ -48,6 +51,41 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 
 			return np.stack(tuple(plane_stack), axis=-1)
 
+		def encode_output(self):
+			distribution = np.zeros(MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6))
+			for move in self.expanded_children:
+				piece_type, old_position, new_position, promoted = move
+				output_index  = AlphaMiniShogiSearchTree.get_output_index( piece_type, old_position, new_position, promoted, self.game.current_player )
+				distribution[output_index] = self.expanded_children[move].visit_count/self.visit_count
+			return distribution
+
+		def get_output_index_multipler(piece_type, old_position, player):
+			old_position = AlphaMiniShogiSearchTree.normalize_positon(old_position, player)
+			piece_type_index = { t: i for i, t in enumerate(MiniShogi.PieceType) }
+			if old_position is None:
+				return piece_type_index[piece_type]
+			# print("get_output_index_multipler", old_position[0], old_position[1])
+			return old_position[0] + old_position[1]*MiniShogi.SIZE + 6
+
+		def get_output_index(piece_type, old_position, new_position, promoted, player):
+			index_multipler = AlphaMiniShogiSearchTree.get_output_index_multipler(piece_type, old_position, player)
+
+			new_position = AlphaMiniShogiSearchTree.normalize_positon(new_position, player)
+			y_position = new_position[1]
+			if not promoted:
+				y_position += 1
+
+			# print("get_output_index", new_position[0]+y_position*MiniShogi.SIZE)
+			return new_position[0]+ y_position*MiniShogi.SIZE + index_multipler*(MiniShogi.SIZE*(MiniShogi.SIZE+1))
+
+		def normalize_positon(position, player):
+			if position is None:
+				return None
+			if player == 1:
+				return position
+			return (MiniShogi.SIZE - position[0] - 1, MiniShogi.SIZE - position[1] - 1)
+
+
 		def predict(self):
 			model_input = np.expand_dims(self.encode_input(), axis=0)
 			policy, reward = self.model.predict(model_input)
@@ -56,6 +94,7 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 
 
 game = setup_puzzle1()
-tree = AlphaMiniShogiSearchTree(game, AlphaGoZeroModel(input_board_size=MiniShogi.SIZE, number_of_input_planes=6*2*2).init_model())
-
+tree = AlphaMiniShogiSearchTree(game, AlphaGoZeroModel(input_board_size=MiniShogi.SIZE, number_of_input_planes=6*2*2, policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6)).init_model())
+tree.search()
 print(tree.predict())
+print(tree.encode_output())

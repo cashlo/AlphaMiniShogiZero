@@ -21,6 +21,7 @@ class AlphaGoZeroModel:
             self,
             input_board_size=7,
             number_of_input_planes=2,
+            policy_output_size=7*7,
             number_of_filters=8,
             kernal_size=3,
             number_of_residual_block=1,
@@ -31,7 +32,7 @@ class AlphaGoZeroModel:
         self.number_of_filters = number_of_filters
         self.kernal_size = kernal_size
         self.number_of_residual_block = number_of_residual_block
-        self.policy_output_size = input_board_size*input_board_size
+        self.policy_output_size = policy_output_size
         self.value_head_hidden_layer_size = value_head_hidden_layer_size
         self.l2_regularization = l2_regularization
         
