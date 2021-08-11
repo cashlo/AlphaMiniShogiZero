@@ -1,10 +1,9 @@
 from monte_carlo_tree_search import Node
 
 class MiniShogiSearchTree(Node):
-	def __init__(self, game, parent=None, from_move=None, gui=None):
+	def __init__(self, game, parent=None, from_move=None):
 		Node.__init__(self, parent=parent, from_move=from_move)
 		self.game = game
-		self.gui = gui
 
 	def rollout(self):
 		simulation_game = self.game.clone()
@@ -15,8 +14,6 @@ class MiniShogiSearchTree(Node):
 			# print("move_count: ", move_count)
 			simulation_game.board_check()
 			simulation_game.make_move(move)
-			if self.gui:
-				gui.draw_board(simulation_game)
 			simulation_game.board_check()
 			if move_count > 100:
 				return 0

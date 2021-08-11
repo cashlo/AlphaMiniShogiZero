@@ -154,5 +154,9 @@ class GameWindow:
 				self.draw_piece(piece)
 		self.window.update()
 
+	def set_status(self, status):
+		self.status_label['text'] = status
+		self.window.update()
+		
 	def mainloop(self):
 		self.window.mainloop()
