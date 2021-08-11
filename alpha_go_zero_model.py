@@ -99,21 +99,12 @@ class AlphaGoZeroModel:
 
     
     def train_from_game_log(self, game_log):
-        half_point = -200000 # len(game_log['x'])//2
-        print(len(game_log['x'])//2)
-        x = np.array(game_log['x'][half_point:])
-        y0 = np.array(game_log['y'][0][half_point:])
-        y1 = np.array(game_log['y'][1][half_point:])
+        x = np.array(game_log['x'])
+        y0 = np.array(game_log['y'][0])
+        y1 = np.array(game_log['y'][1])
 
-        xr1, y0r1, y1r1 = rotate_data((x, y0, y1), self.input_board_size, 1)
-        xr2, y0r2, y1r2 = rotate_data((x, y0, y1), self.input_board_size, 2)
-        xr3, y0r3, y1r3 = rotate_data((x, y0, y1), self.input_board_size, 3)
-
-        xf  = np.concatenate( (x, xr1, xr2, xr3) )
-        y0f = np.concatenate( (y0, y0r1, y0r2, y0r3) )
-        y1f = np.concatenate( (y1, y1r1, y1r2, y1r3) )
 
         def step_decay(epoch):
             return 2e-4*(0.4**(epoch+1))
         callback = tf.keras.callbacks.LearningRateScheduler(step_decay)
-        self.model.fit(xf, [y0f, y1f], shuffle=True, batch_size=32, epochs=3, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
+        self.model.fit(x, [y0, y1], shuffle=True, batch_size=32, epochs=3, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])

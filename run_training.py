@@ -15,6 +15,8 @@ def backfill_end_reward(game_log, game_steps_count, result, last_player):
 	game_reward = [0]*game_steps_count
 	index = game_steps_count-1
 	reward = 1 if last_player == result else -1
+	if result is None:
+		reward = 0
 	while index >= 0:
 		game_reward[index] = reward
 		reward = -reward
@@ -48,9 +50,11 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
 			game.make_move(move)
 			gui.draw_board(game)
 			search_tree = search_tree.create_from_move(move)
-		print(f"Game {i+1}:")
-		game.print()
+			if game_steps_count > 200:
+				break
 		winner = game.check_game_over()
+		print(f"Game {i+1}: {game_steps_count} moves {winner} win")
+		game.print()
 		backfill_end_reward(game_log, game_steps_count, winner, 1-game.current_player)
 
 def net_vs(net_0, net_1, number_of_games, game_log, gui, mind_window_0, mind_window_1, simulation_limit=50):
@@ -94,13 +98,16 @@ def net_vs(net_0, net_1, number_of_games, game_log, gui, mind_window_0, mind_win
 			player = 1-player
 			tree_dict[player][1] = tree_dict[player][1].create_from_move(move)
 			# game.board.print()
+			if game_steps_count > 200:
+				break
 		game.print()
 		result = game.board.check_board()
 		backfill_end_reward(game_log, game_steps_count, result, 1-player)
 		gui.reset_board()
 		#if result != Gomoku.DRAW:
 		winner = tree_dict[result][0]
-		winner_count[winner] += 1
+		if winner is not None:
+			winner_count[winner] += 1
 		print(f"Game {i+1}: {winner_count[0]}:{winner_count[1]}")
 	print(f"Net 0 win rate: {winner_count[0]/number_of_games:.0%}")
 	print(f"Net 1 win rate: {winner_count[1]/number_of_games:.0%}")
@@ -112,7 +119,7 @@ parser.add_argument("--train-new-net", help="Train new NN", action="store_true")
 
 args = parser.parse_args()
 if args.gen_data:
-	sim_limit = 1500
+	sim_limit = 10
 
 	game_log = {
 		'x': [],
@@ -132,7 +139,7 @@ if args.gen_data:
 		print("Model file not found")
 
 	gui = GameWindow("Current AI self-play to generate new data for training")
-	mind_window = GameWindow("Considering move", show_title=False, line_width=4)
+	mind_window = GameWindow("Considering move", canvas_size=400, show_title=False)
 
 	while True:
 		net_files = glob.glob(f'model_minishogi_*')
@@ -165,7 +172,7 @@ if args.train_new_net:
 		net_vs_game_log = pickle.loads(open(f"net_vs_game_log_minishogi_{sim_limit}.pickle", "rb").read())
 	
 
-	best_net_so_far = AlphaGoZeroModel(input_board_size=Gomoku.SIZE).init_model()
+	best_net_so_far = AlphaGoZeroModel(input_board_size=MiniShogi.SIZE, number_of_input_planes=6*2*2, policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6)).init_model()
 
 	net_files = glob.glob(f'model_minishogi_*')
 	if net_files:
@@ -178,8 +185,8 @@ if args.train_new_net:
 	mind_window_2 = GameWindow("New AI", show_title=False, line_width=4)
 
 	while True:
-		if os.path.isfile(f"game_log_minishogi_1500.pickle"):
-			game_log = pickle.loads(open(f"game_log_minishogi_1500.pickle", "rb").read())
+		if os.path.isfile(f"game_log_minishogi_10.pickle"):
+			game_log = pickle.loads(open(f"game_log_minishogi_10.pickle", "rb").read())
 		else:
 			sys.exit("Game log not found")
 
@@ -215,10 +222,10 @@ if args.train_new_net:
 
 		print("Evaluate old net:")
 		#best_net_so_far.model.summary()
-		print(best_net_so_far.evaluate_from_game_log(new_game_log))
+		print(best_net_so_far.evaluate_from_game_log(game_log))
 		print("Evaluate new net:")
 		#fresh_net.model.summary()
-		print(fresh_net.evaluate_from_game_log(new_game_log))
+		print(fresh_net.evaluate_from_game_log(game_log))
 
 		gui.set_status("Checking new net performance...")
 		start_time = time()

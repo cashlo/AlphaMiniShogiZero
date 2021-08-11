@@ -17,7 +17,7 @@ class GameWindow:
 
 		self.render_counter = 0
 
-		self.canvas_size = 600
+		self.canvas_size = canvas_size
 		self.margin_size = self.canvas_size/7
 		self.row_height = (self.canvas_size - self.margin_size*2)/MiniShogi.SIZE
 
@@ -118,7 +118,7 @@ class GameWindow:
 			fill="#FFD167",
 			tags = "piece"
 		)
-		font = tkFont.Font(size=40)
+		font = tkFont.Font(family="Helvetica", size=40)
 		self.canvas.create_text(
 			self.margin_size+(position[0]+1/2)*row_height,
 			self.margin_size+(position[1]+1/2)*row_height,
@@ -157,6 +157,6 @@ class GameWindow:
 	def set_status(self, status):
 		self.status_label['text'] = status
 		self.window.update()
-		
+
 	def mainloop(self):
 		self.window.mainloop()

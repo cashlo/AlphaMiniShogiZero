@@ -31,8 +31,8 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 				#past_nodes.append(next_node)
 			# self.print('')
 			# code.interact(local=locals())
-			print(f"Number of sumulation: {simulation_count}")
-			print(f"thinking time: {time()-start_time}")
+			# print(f"Number of sumulation: {simulation_count}")
+			# print(f"thinking time: {time()-start_time}")
 			return self.most_visited_child(random=step <= 3)
 
 		def most_visited_child(self, random=False):
