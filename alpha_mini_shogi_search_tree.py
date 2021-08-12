@@ -33,7 +33,7 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 			# code.interact(local=locals())
 			# print(f"Number of sumulation: {simulation_count}")
 			# print(f"thinking time: {time()-start_time}")
-			return self.most_visited_child(random=step <= 3)
+			return self.most_visited_child(random=step <= 10)
 
 		def most_visited_child(self, random=False):
 			if not random:
@@ -101,7 +101,9 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 			return reward[0]
 
 		def encode_input(self):
-			player_piece    = defaultdict(lambda: [np.zeros((MiniShogi.SIZE, MiniShogi.SIZE)), np.zeros((MiniShogi.SIZE, MiniShogi.SIZE))])
+			player_piece             = defaultdict(lambda: [np.zeros((MiniShogi.SIZE, MiniShogi.SIZE)), np.zeros((MiniShogi.SIZE, MiniShogi.SIZE))])
+			player_promoted_piece    = defaultdict(lambda: [np.zeros((MiniShogi.SIZE, MiniShogi.SIZE)), np.zeros((MiniShogi.SIZE, MiniShogi.SIZE))])
+
 			player_prisoner = defaultdict(lambda: [np.zeros((MiniShogi.SIZE, MiniShogi.SIZE)), np.zeros((MiniShogi.SIZE, MiniShogi.SIZE))])
 			
 			for pieceType in MiniShogi.PieceType:
@@ -115,7 +117,12 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 						player_prisoner[p.pieceType][player] += np.ones((MiniShogi.SIZE, MiniShogi.SIZE))
 					else:
 						position = AlphaMiniShogiSearchTree.normalize_positon(p.position, player)
-						player_piece[p.pieceType][player][position[0]][position[1]] = 1
+						if p.promoted:
+							if pieceType in {MiniShogi.PieceType.KING, MiniShogi.PieceType.GOLD}:
+								raise ValueError('illegal promotion!')
+							player_promoted_piece[p.pieceType][player][position[0]][position[1]] = 1
+						else:
+							player_piece[p.pieceType][player][position[0]][position[1]] = 1
 
 
 			plane_stack = []
@@ -125,6 +132,8 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 				order = [self.game.current_player, 1-self.game.current_player]
 				for player in order:
 					plane_stack.append(player_piece[pieceType][player])
+					if pieceType not in {MiniShogi.PieceType.KING, MiniShogi.PieceType.GOLD}:
+						plane_stack.append(player_promoted_piece[pieceType][player])
 					plane_stack.append(player_prisoner[pieceType][player])
 
 			return np.stack(tuple(plane_stack), axis=-1)

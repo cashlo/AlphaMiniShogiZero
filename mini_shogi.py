@@ -11,6 +11,7 @@ class MiniShogi:
 			self.current_player = 1
 			self.player_pieces = [[], []]
 			self.board = MiniShogi.Board(MiniShogi.SIZE)
+			self.move_history = []
 		
 		def setup(self):
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.ROOK,   (0, 0), False, 0))
@@ -27,6 +28,12 @@ class MiniShogi:
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   (0, 4), False, 1))
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.PAWN,   (0, 3), False, 1))
 
+		def is_repeating(self):
+			if len(self.move_history) < 6:
+				return False
+			if self.move_history[-1] == self.move_history[-5] and self.move_history[-2] == self.move_history[-6]:
+				return True
+			return False
 
 		def board_check(self):
 			return
@@ -63,6 +70,7 @@ class MiniShogi:
 
 		def make_move(self, move):
 			piece_type, old_position, new_position, promoted = move
+			self.move_history.append(move)
 			
 			piece = None
 			for p in self.player_pieces[self.current_player]:
@@ -216,35 +224,6 @@ class MiniShogi:
 			code.interact(local=locals())
 			raise ValueError('Not on a line')
 
-
-
-		# def check_board(self, current_player):
-		# 	other_player = 1-current_player
-
-		# 	king_attacking_pieces = []
-
-		# 	for p in self.player_pieces[other_player]:
-		# 		if self.player_kings[current_player].position in p.get_moves(self):
-		# 			king_attacking_pieces.append(p)
-
-		# 	if not king_attacking_pieces:
-		# 		return (MiniShogi.State.IN_PROGRESS, None)
-
-		# 	other_player_attack_area_set = set(self.player_attack_area(other_player))
-		# 	current_player_attack_area_set = set(self.player_attack_area(other_player))
-
-		# 	if set(self.player_kings[current_player].get_moves(self)) - other_player_attack_area_set:
-		# 		return (MiniShogi.State.IN_PROGRESS, None)
-		# 	if len(king_attacking_pieces) == 1:
-		# 		if king_attacking_pieces[0].position in current_player_attack_area_set:
-		# 			return (MiniShogi.State.IN_PROGRESS, None)
-		# 		if self.between(
-		# 				self.player_kings[current_player].position,
-		# 				king_attacking_pieces[0].position
-		# 			).intersection(current_player_attack_area_set):
-		# 			return (MiniShogi.State.IN_PROGRESS, None)
-		# 	return (MiniShogi.State.CHECKMATE, other_player)
-
 		def print(self):
 			ranks = ['']*self.size
 			for file in self.board:
@@ -351,7 +330,8 @@ class MiniShogi:
 				if (self.player == 0 and new_position[1] == 4) or (self.player == 1 and new_position[1] == 0):
 					if self.pieceType == MiniShogi.PieceType.PAWN:
 						valid_moves.remove( new_position )
-					valid_moves.add( (new_position[0], new_position[1], True) )
+					if self.pieceType not in {MiniShogi.PieceType.KING, MiniShogi.PieceType.GOLD}:
+						valid_moves.add( (new_position[0], new_position[1], True) )
 
 			for m in moveType.long_moves():
 				new_position = ( self.position[0], self.position[1], False )
@@ -367,7 +347,8 @@ class MiniShogi:
 					if (self.player == 0 and new_position[1] == 4) or (self.player == 1 and new_position[1] == 0):
 						if self.pieceType == MiniShogi.PieceType.PAWN:
 							valid_moves.remove( new_position )
-						valid_moves.add( (new_position[0], new_position[1], True) )
+						if self.pieceType not in {MiniShogi.PieceType.KING, MiniShogi.PieceType.GOLD}:
+							valid_moves.add( (new_position[0], new_position[1], True) )
 
 					if capturing_piece is not None and capturing_piece != ignore_piece:
 						break

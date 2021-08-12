@@ -50,7 +50,9 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
 			game.make_move(move)
 			gui.draw_board(game)
 			search_tree = search_tree.create_from_move(move)
-			if game_steps_count > 200:
+			if game.is_repeating():
+				break
+			if game_steps_count >= 100:
 				break
 		winner = game.check_game_over()
 		print(f"Game {i+1}: {game_steps_count} moves {winner} win")
@@ -98,15 +100,16 @@ def net_vs(net_0, net_1, number_of_games, game_log, gui, mind_window_0, mind_win
 			player = 1-player
 			tree_dict[player][1] = tree_dict[player][1].create_from_move(move)
 			# game.board.print()
-			if game_steps_count > 200:
+			if game.is_repeating():
+				break
+			if game_steps_count >= 100:
 				break
 		game.print()
-		result = game.board.check_board()
+		result = game.check_game_over()
 		backfill_end_reward(game_log, game_steps_count, result, 1-player)
-		gui.reset_board()
 		#if result != Gomoku.DRAW:
-		winner = tree_dict[result][0]
-		if winner is not None:
+		if result is not None:
+			winner = tree_dict[result][0]
 			winner_count[winner] += 1
 		print(f"Game {i+1}: {winner_count[0]}:{winner_count[1]}")
 	print(f"Net 0 win rate: {winner_count[0]/number_of_games:.0%}")
@@ -128,7 +131,14 @@ if args.gen_data:
 	if os.path.isfile(f"game_log_minishogi_{sim_limit}.pickle"):
 		game_log = pickle.loads(open(f"game_log_minishogi_{sim_limit}.pickle", "rb").read())
 
-	best_net_so_far = AlphaGoZeroModel(input_board_size=MiniShogi.SIZE, number_of_input_planes=6*2*2, policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6)).init_model()
+	best_net_so_far = AlphaGoZeroModel(
+			input_board_size=MiniShogi.SIZE,
+			number_of_input_planes=6*2*2+4*2,
+			policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6),
+			number_of_filters=64,
+			number_of_residual_block=20,
+			value_head_hidden_layer_size=64
+		).init_model()
 
 	net_files = glob.glob(f'model_minishogi_*')
 	if net_files:
@@ -166,13 +176,20 @@ if args.train_new_net:
 		'y': [[],[]]
 	}
 
-	sim_limit = 500
+	sim_limit = 20
 	
 	if os.path.isfile(f"net_vs_game_log_minishogi_{sim_limit}.pickle"):
 		net_vs_game_log = pickle.loads(open(f"net_vs_game_log_minishogi_{sim_limit}.pickle", "rb").read())
 	
 
-	best_net_so_far = AlphaGoZeroModel(input_board_size=MiniShogi.SIZE, number_of_input_planes=6*2*2, policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6)).init_model()
+	best_net_so_far = AlphaGoZeroModel(
+			input_board_size=MiniShogi.SIZE,
+			number_of_input_planes=6*2*2+4*2,
+			policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6),
+			number_of_filters=64,
+			number_of_residual_block=20,
+			value_head_hidden_layer_size=64
+		).init_model()
 
 	net_files = glob.glob(f'model_minishogi_*')
 	if net_files:
@@ -181,8 +198,8 @@ if args.train_new_net:
 		best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
 
 	gui = GameWindow("Newly trained AI fight current AI to become the data generating AI")
-	mind_window_1 = GameWindow("Current AI", show_title=False, line_width=4)
-	mind_window_2 = GameWindow("New AI", show_title=False, line_width=4)
+	mind_window_1 = GameWindow("Current AI", show_title=False, line_width=4, canvas_size=400)
+	mind_window_2 = GameWindow("New AI", show_title=False, line_width=4, canvas_size=400)
 
 	while True:
 		if os.path.isfile(f"game_log_minishogi_10.pickle"):
@@ -193,19 +210,10 @@ if args.train_new_net:
 		gui.set_status("Training new AI...")
 		start_time = time()
 
-		AlphaGoZeroModel(
-			input_board_size=MiniShogi.SIZE,
-			number_of_input_planes=6*2*2,
-			policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6),
-			number_of_filters=64,
-			number_of_residual_block=20,
-			value_head_hidden_layer_size=64
-		).init_model()
-
 
 		fresh_net = AlphaGoZeroModel(
 			input_board_size=MiniShogi.SIZE,
-			number_of_input_planes=6*2*2,
+			number_of_input_planes=6*2*2+4*2,
 			policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6),
 			number_of_filters=64,
 			number_of_residual_block=20,
@@ -229,7 +237,7 @@ if args.train_new_net:
 
 		gui.set_status("Checking new net performance...")
 		start_time = time()
-		fresh_net_win_rate = net_vs(best_net_so_far, fresh_net, 30, net_vs_game_log, gui, mind_window_1, mind_window_2, sim_limit)
+		fresh_net_win_rate = net_vs(best_net_so_far, fresh_net, 20, net_vs_game_log, gui, mind_window_1, mind_window_2, sim_limit)
 		save_game_log(net_vs_game_log, sim_limit, f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{sim_limit}.pickle")
 		if fresh_net_win_rate >= 0.65:
 			gui.set_status("New net won!")
