@@ -116,7 +116,7 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 					if p.position is None:
 						player_prisoner[p.pieceType][player] += np.ones((MiniShogi.SIZE, MiniShogi.SIZE))
 					else:
-						position = AlphaMiniShogiSearchTree.normalize_positon(p.position, player)
+						position = AlphaMiniShogiSearchTree.normalize_positon(p.position, self.game.current_player)
 						if p.promoted:
 							if pieceType in {MiniShogi.PieceType.KING, MiniShogi.PieceType.GOLD}:
 								raise ValueError('illegal promotion!')
