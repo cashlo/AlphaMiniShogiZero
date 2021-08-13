@@ -26,7 +26,7 @@ def backfill_end_reward(game_log, game_steps_count, result, last_player):
 
 def save_game_log(game_log, sim_limit, file_name=None):
 	if not file_name:
-		file_name=f"game_log_minishogi_{sim_limit}.pickle"
+		file_name=f"game_log_minishogi_{sim_limit}_2.pickle"
 	f = open(file_name, "wb")
 	f.write(pickle.dumps(game_log))
 	f.close()
@@ -119,6 +119,7 @@ def net_vs(net_0, net_1, number_of_games, game_log, gui, mind_window_0, mind_win
 parser = argparse.ArgumentParser()
 parser.add_argument("--gen-data", help="Generate new data with latest net", action="store_true")
 parser.add_argument("--train-new-net", help="Train new NN", action="store_true")
+parser.add_argument("id", type=int, help="instant id")
 
 args = parser.parse_args()
 if args.gen_data:
@@ -128,8 +129,8 @@ if args.gen_data:
 		'x': [],
 		'y': [[],[]]
 	}
-	if os.path.isfile(f"game_log_minishogi_{sim_limit}.pickle"):
-		game_log = pickle.loads(open(f"game_log_minishogi_{sim_limit}.pickle", "rb").read())
+	if os.path.isfile(f"game_log_minishogi_{sim_limit}_{args.id}.pickle"):
+		game_log = pickle.loads(open(f"game_log_minishogi_{sim_limit}_{args.id}.pickle", "rb").read())
 
 	best_net_so_far = AlphaGoZeroModel(
 			input_board_size=MiniShogi.SIZE,
@@ -149,7 +150,7 @@ if args.gen_data:
 		print("Model file not found")
 
 	gui = GameWindow("Current AI self-play to generate new data for training")
-	mind_window = GameWindow("Considering move", canvas_size=400, show_title=False)
+	# mind_window = GameWindow("Considering move", canvas_size=400, show_title=False)
 
 	while True:
 		net_files = glob.glob(f'model_minishogi_*')
@@ -160,8 +161,8 @@ if args.gen_data:
 
 		start_time = time()
 		gui.set_status("Generating new data...")
-		generate_data(game_log, best_net_so_far, 5, gui, mind_window, sim_limit)
-		save_game_log(game_log, sim_limit)
+		generate_data(game_log, best_net_so_far, 5, gui, None, sim_limit)
+		save_game_log(game_log, sim_limit, file_name=f"game_log_minishogi_{sim_limit}_{args.id}.pickle")
 		gui.set_status(f"Time taken: {time()-start_time}")			
 
 	
