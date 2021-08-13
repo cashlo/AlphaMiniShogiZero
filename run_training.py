@@ -26,7 +26,7 @@ def backfill_end_reward(game_log, game_steps_count, result, last_player):
 
 def save_game_log(game_log, sim_limit, file_name=None):
 	if not file_name:
-		file_name=f"game_log_minishogi_{sim_limit}_2.pickle"
+		file_name=f"game_log_minishogi_{sim_limit}.pickle"
 	f = open(file_name, "wb")
 	f.write(pickle.dumps(game_log))
 	f.close()
