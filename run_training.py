@@ -122,7 +122,7 @@ parser.add_argument("--train-new-net", help="Train new NN", action="store_true")
 
 args = parser.parse_args()
 if args.gen_data:
-	sim_limit = 10
+	sim_limit = 100
 
 	game_log = {
 		'x': [],
@@ -176,7 +176,7 @@ if args.train_new_net:
 		'y': [[],[]]
 	}
 
-	sim_limit = 20
+	sim_limit = 100
 	
 	if os.path.isfile(f"net_vs_game_log_minishogi_{sim_limit}.pickle"):
 		net_vs_game_log = pickle.loads(open(f"net_vs_game_log_minishogi_{sim_limit}.pickle", "rb").read())
@@ -202,8 +202,8 @@ if args.train_new_net:
 	mind_window_2 = GameWindow("New AI", show_title=False, line_width=4, canvas_size=400)
 
 	while True:
-		if os.path.isfile(f"game_log_minishogi_10.pickle"):
-			game_log = pickle.loads(open(f"game_log_minishogi_10.pickle", "rb").read())
+		if os.path.isfile(f"game_log_minishogi_100.pickle"):
+			game_log = pickle.loads(open(f"game_log_minishogi_100.pickle", "rb").read())
 		else:
 			sys.exit("Game log not found")
 
@@ -237,8 +237,8 @@ if args.train_new_net:
 
 		gui.set_status("Checking new net performance...")
 		start_time = time()
-		fresh_net_win_rate = net_vs(best_net_so_far, fresh_net, 20, net_vs_game_log, gui, mind_window_1, mind_window_2, sim_limit)
-		save_game_log(net_vs_game_log, sim_limit, f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{sim_limit}.pickle")
+		fresh_net_win_rate = 1 # net_vs(best_net_so_far, fresh_net, 20, net_vs_game_log, gui, mind_window_1, mind_window_2, sim_limit)
+		save_game_log(net_vs_game_log, sim_limit, f"net_vs_game_log_{sim_limit}.pickle")
 		if fresh_net_win_rate >= 0.65:
 			gui.set_status("New net won!")
 			best_net_so_far = fresh_net
