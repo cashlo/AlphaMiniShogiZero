@@ -38,7 +38,7 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
 		game.setup()
 		search_tree = AlphaMiniShogiSearchTree(game.clone(), net,simulation_limit=simulation_limit)
 		game_steps_count = 0
-		gui.set_status(f"Game {i+1}")
+		# gui.set_status(f"Game {i+1}")
 		while game.check_game_over() is None:
 			# print(search_tree.game)
 			move = search_tree.search(step=game_steps_count, gui=mind_window).from_move
@@ -49,6 +49,8 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
 			game_steps_count += 1
 			game.make_move(move)
 			gui.draw_board(game)
+			gui.draw_move(move)
+
 			search_tree = search_tree.create_from_move(move)
 			if game.is_repeating():
 				break
@@ -96,6 +98,8 @@ def net_vs(net_0, net_1, number_of_games, game_log, gui, mind_window_0, mind_win
 			game_steps_count += 1
 			game.make_move(move)
 			gui.draw_board(game)
+			gui.draw_move(move)
+
 			tree_dict[player][1] = tree_dict[player][1].create_from_move(move)
 			player = 1-player
 			tree_dict[player][1] = tree_dict[player][1].create_from_move(move)
@@ -119,11 +123,11 @@ def net_vs(net_0, net_1, number_of_games, game_log, gui, mind_window_0, mind_win
 parser = argparse.ArgumentParser()
 parser.add_argument("--gen-data", help="Generate new data with latest net", action="store_true")
 parser.add_argument("--train-new-net", help="Train new NN", action="store_true")
-parser.add_argument("id", type=int, help="instant id")
+parser.add_argument("id", type=int, help="instant id", default=0, nargs='?')
 
 args = parser.parse_args()
 if args.gen_data:
-	sim_limit = 100
+	sim_limit = 1000
 
 	game_log = {
 		'x': [],
@@ -161,7 +165,7 @@ if args.gen_data:
 
 		start_time = time()
 		gui.set_status("Generating new data...")
-		generate_data(game_log, best_net_so_far, 5, gui, None, sim_limit)
+		generate_data(game_log, best_net_so_far, 1, gui, None, sim_limit)
 		save_game_log(game_log, sim_limit, file_name=f"game_log_minishogi_{sim_limit}_{args.id}.pickle")
 		gui.set_status(f"Time taken: {time()-start_time}")			
 
@@ -196,7 +200,7 @@ if args.train_new_net:
 	if net_files:
 		lastest_model_file = max(net_files)
 		print(f"Lastest net: {lastest_model_file}")
-		best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
+		# best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
 
 	gui = GameWindow("Newly trained AI fight current AI to become the data generating AI")
 	mind_window_1 = GameWindow("Current AI", show_title=False, line_width=4, canvas_size=400)
@@ -221,10 +225,23 @@ if args.train_new_net:
 			value_head_hidden_layer_size=64
 		).init_model()
 
-		
-		# game_log['x'].extend( new_game_log_3['x'] )
-		# game_log['y'][0].extend( new_game_log_3['y'][0] )
-		# game_log['y'][1].extend( new_game_log_3['y'][1] )
+		extra_game_log_files = glob.glob(f'game_log_minishogi_100_*')
+		for file in extra_game_log_files:
+			extra_game_log = pickle.loads(open(file, "rb").read())
+
+			game_log['x'].extend( extra_game_log['x'] )
+			game_log['y'][0].extend( extra_game_log['y'][0] )
+			game_log['y'][1].extend( extra_game_log['y'][1] )
+
+		extra_game_log_files = glob.glob(f'mac_data/game_log_minishogi_100_*')
+		for file in extra_game_log_files:
+			extra_game_log = pickle.loads(open(file, "rb").read())
+
+			game_log['x'].extend( extra_game_log['x'] )
+			game_log['y'][0].extend( extra_game_log['y'][0] )
+			game_log['y'][1].extend( extra_game_log['y'][1] )
+
+
 
 		fresh_net.train_from_game_log(game_log)
 		print(f"Time taken: {time()-start_time}")
@@ -238,7 +255,7 @@ if args.train_new_net:
 
 		gui.set_status("Checking new net performance...")
 		start_time = time()
-		fresh_net_win_rate = 1 # net_vs(best_net_so_far, fresh_net, 20, net_vs_game_log, gui, mind_window_1, mind_window_2, sim_limit)
+		fresh_net_win_rate = net_vs(best_net_so_far, fresh_net, 20, net_vs_game_log, gui, mind_window_1, mind_window_2, sim_limit)
 		save_game_log(net_vs_game_log, sim_limit, f"net_vs_game_log_{sim_limit}.pickle")
 		if fresh_net_win_rate >= 0.65:
 			gui.set_status("New net won!")

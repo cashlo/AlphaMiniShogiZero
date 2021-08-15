@@ -7,8 +7,7 @@ from mini_shogi_search_tree import MiniShogiSearchTree
 game = MiniShogi.Game()
 game.setup()
 
-sim_window = None # GameWindow("Simulation")
-search_tree = MiniShogiSearchTree(game.clone(), gui=sim_window)
+search_tree = MiniShogiSearchTree(game.clone())
 
 last_clicked_piece = None
 def on_click(x, y, promotion):
@@ -32,6 +31,7 @@ def on_click(x, y, promotion):
 				game.make_move(clicked_move)
 				search_tree = search_tree.create_from_move( clicked_move )
 				window.draw_board(game)
+				window.draw_move(clicked_move)
 				winner = game.check_game_over()
 				if winner is not None:
 					print("Winner is ", winner)
@@ -41,6 +41,8 @@ def on_click(x, y, promotion):
 				move = search_tree.from_move
 				game.make_move(move)
 				window.draw_board(game)
+				window.draw_move(move)
+				
 			last_clicked_piece = None
 		return
 
@@ -49,7 +51,7 @@ def on_click(x, y, promotion):
 	last_clicked_piece = p
 	legal_moves = game.all_legal_moves(p.player)
 	# print(legal_moves)
-	window.draw_moves(legal_moves, p)
+	window.draw_possible_moves(legal_moves, p)
 
 def make_random_move():
 	winner = game.check_game_over()

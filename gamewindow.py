@@ -128,8 +128,8 @@ class GameWindow:
 			angle=0  if piece.player else 180
 		)
 
-	def draw_moves(self, moves, piece):
-		self.canvas.delete('move')
+	def draw_possible_moves(self, moves, piece):
+		self.canvas.delete('possible_moves')
 		for m in moves:
 			piece_type, old_position, new_position, promoted = m
 			if piece.pieceType != piece_type or piece.position != old_position:
@@ -142,12 +142,44 @@ class GameWindow:
 				outline='red',
 				width=5,
 				# dash=(4, 4),
+				tags='possible_moves'
+			)
+
+	def draw_move(self, move, clear_old_move = True):
+		if clear_old_move:
+			self.canvas.delete('move')
+		
+		piece_type, old_position, new_position, promoted = move
+		if old_position is None:
+			self.canvas.create_line(
+				self.margin_size+(new_position[0]+0.5)*self.row_height,
+				self.margin_size+(new_position[1]+0.1)*self.row_height,
+				self.margin_size+(new_position[0]+0.5)*self.row_height,
+				self.margin_size+(new_position[1]+0.5)*self.row_height,
+				arrow=LAST,
+				arrowshape=(20,20,6),
+				fill='red',
+				width=20,
 				tags='move'
 			)
+		else:	
+			self.canvas.create_line(
+				self.margin_size+(old_position[0]+0.5)*self.row_height,
+				self.margin_size+(old_position[1]+0.5)*self.row_height,
+				self.margin_size+(new_position[0]+0.5)*self.row_height,
+				self.margin_size+(new_position[1]+0.5)*self.row_height,
+				arrow=LAST,
+				arrowshape=(20,20,6),
+				fill='red',
+				width=20,
+				tags='move'
+			)
+		self.window.update()
+
 
 	def draw_board(self, game):
 		self.canvas.delete('piece')
-		self.canvas.delete('move')
+		self.canvas.delete('possible_moves')
 
 		for player_pieces in game.player_pieces:
 			for piece in player_pieces:
