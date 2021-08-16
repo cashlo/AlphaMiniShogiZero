@@ -16,14 +16,23 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 			self.policy = None
 			self.reward = 0
 
-		def search(self, step=5, gui=None):
+		def search(self, step=5, move_window=None, tree_window=None):
 			simulation_count = 0
 			#past_nodes = []
 			start_time = time()
 			while simulation_count < self.simulation_limit:
 				next_node = self.pick_next_node(self.exploration_constant)
-				if gui is not None:
-					gui.draw_board(next_node.game)
+				if simulation_count%10 == 0:
+					if move_window is not None:
+						move_window.draw_board(self.game)
+						clear_moves = True
+						for c in self.expanded_children.values():
+							move_window.draw_move(c.from_move, clear_moves, c.visit_count/self.visit_count, 10)
+							clear_moves = False
+					if tree_window is not None:
+						tree_window.draw_tree(next_node)
+
+
 				# next_node.board.print()
 				reward = next_node.rollout()
 				next_node.backup(reward)

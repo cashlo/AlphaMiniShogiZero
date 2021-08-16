@@ -199,7 +199,7 @@ if args.train_new_net:
 	net_files = glob.glob(f'model_minishogi_*')
 	if net_files:
 		lastest_model_file = max(net_files)
-		print(f"Lastest net: {lastest_model_file}")
+		# print(f"Lastest net: {lastest_model_file}")
 		# best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
 
 	gui = GameWindow("Newly trained AI fight current AI to become the data generating AI")
@@ -207,11 +207,6 @@ if args.train_new_net:
 	mind_window_2 = GameWindow("New AI", show_title=False, line_width=4, canvas_size=400)
 
 	while True:
-		if os.path.isfile(f"game_log_minishogi_100.pickle"):
-			game_log = pickle.loads(open(f"game_log_minishogi_100.pickle", "rb").read())
-		else:
-			sys.exit("Game log not found")
-
 		gui.set_status("Training new AI...")
 		start_time = time()
 
@@ -220,12 +215,12 @@ if args.train_new_net:
 			input_board_size=MiniShogi.SIZE,
 			number_of_input_planes=6*2*2+4*2,
 			policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6),
-			number_of_filters=64,
-			number_of_residual_block=20,
-			value_head_hidden_layer_size=64
+			number_of_filters=32,
+			number_of_residual_block=10,
+			value_head_hidden_layer_size=32
 		).init_model()
 
-		extra_game_log_files = glob.glob(f'game_log_minishogi_100_*')
+		extra_game_log_files = glob.glob(f'game_log_minishogi_1000_*')
 		for file in extra_game_log_files:
 			extra_game_log = pickle.loads(open(file, "rb").read())
 
@@ -233,7 +228,7 @@ if args.train_new_net:
 			game_log['y'][0].extend( extra_game_log['y'][0] )
 			game_log['y'][1].extend( extra_game_log['y'][1] )
 
-		extra_game_log_files = glob.glob(f'mac_data/game_log_minishogi_100_*')
+		extra_game_log_files = glob.glob(f'mac_data/game_log_minishogi_1000_*')
 		for file in extra_game_log_files:
 			extra_game_log = pickle.loads(open(file, "rb").read())
 

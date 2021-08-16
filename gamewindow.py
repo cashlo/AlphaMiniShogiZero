@@ -145,7 +145,7 @@ class GameWindow:
 				tags='possible_moves'
 			)
 
-	def draw_move(self, move, clear_old_move = True):
+	def draw_move(self, move, clear_old_move = True, score=1, arrow_width=20):
 		if clear_old_move:
 			self.canvas.delete('move')
 		
@@ -159,7 +159,7 @@ class GameWindow:
 				arrow=LAST,
 				arrowshape=(20,20,6),
 				fill='red',
-				width=20,
+				width=arrow_width*score,
 				tags='move'
 			)
 		else:	
@@ -171,7 +171,7 @@ class GameWindow:
 				arrow=LAST,
 				arrowshape=(20,20,6),
 				fill='red',
-				width=20,
+				width=arrow_width*score,
 				tags='move'
 			)
 		self.window.update()
