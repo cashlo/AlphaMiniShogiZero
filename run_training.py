@@ -41,7 +41,7 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
 		# gui.set_status(f"Game {i+1}")
 		while game.check_game_over() is None:
 			# print(search_tree.game)
-			move = search_tree.search(step=game_steps_count, gui=mind_window).from_move
+			move = search_tree.search(step=game_steps_count, search=mind_window).from_move
 
 			game_log['x'].append(search_tree.encode_input())
 			game_log['y'][0].append(search_tree.encode_output())
@@ -90,7 +90,7 @@ def net_vs(net_0, net_1, number_of_games, game_log, gui, mind_window_0, mind_win
 		player = game.current_player
 		game_steps_count = 0
 		while game.check_game_over() is None:
-			move = tree_dict[player][1].search(step=game_steps_count, gui=tree_dict[player][2]).from_move
+			move = tree_dict[player][1].search(step=game_steps_count, move_window=tree_dict[player][2]).from_move
 
 			game_log['x'].append(tree_dict[player][1].encode_input())
 			game_log['y'][0].append(tree_dict[player][1].encode_output())

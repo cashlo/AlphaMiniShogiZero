@@ -4,7 +4,7 @@ import random
 from time import time
 
 class Node:
-	def __init__(self, parent=None, from_move=None, simulation_limit=1000, exploration_constant=1, reward_decay=1):
+	def __init__(self, parent=None, from_move=None, simulation_limit=1500, exploration_constant=1, reward_decay=1):
 		self.parent=parent
 		self.reward = 0
 		self.visit_count = 1
@@ -15,7 +15,7 @@ class Node:
 		self.reward_decay = reward_decay
 		self.from_move = from_move
 
-	def search(self):
+	def search(self, move_window=None, tree_window=None):
 		simulation_count = 0
 		start_time = time()
 		#past_nodes = []
@@ -24,6 +24,16 @@ class Node:
 			next_node = self.pick_next_node(self.exploration_constant)
 			reward = next_node.rollout()
 			next_node.backup(reward)
+			print("Rollout result: ", reward)
+			if simulation_count%10 == 0:
+				if move_window is not None:
+					move_window.draw_board(self.game)
+					clear_moves = True
+					for c in self.expanded_children.values():
+						move_window.draw_move(c.from_move, clear_moves, c.visit_count/self.visit_count, 10)
+						clear_moves = False
+				if tree_window is not None:
+					tree_window.draw_tree(next_node)
 			simulation_count += 1
 			#past_nodes.append(next_node)
 		# self.print('')

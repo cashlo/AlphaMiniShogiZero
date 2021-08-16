@@ -9,8 +9,8 @@ from time import time
 
 class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 
-		def __init__(self, game, model, parent=None, from_move=None, simulation_limit=1500):
-			MiniShogiSearchTree.__init__(self, game, parent=parent, from_move=from_move)
+		def __init__(self, game, model, parent=None, from_move=None, simulation_limit=1500, exploration_constant=10):
+			MiniShogiSearchTree.__init__(self, game, parent=parent, from_move=from_move, exploration_constant=exploration_constant)
 			self.simulation_limit = simulation_limit
 			self.model = model
 			self.policy = None
@@ -29,13 +29,18 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 						for c in self.expanded_children.values():
 							move_window.draw_move(c.from_move, clear_moves, c.visit_count/self.visit_count, 10)
 							clear_moves = False
-					if tree_window is not None:
-						tree_window.draw_tree(next_node)
 
 
 				# next_node.board.print()
 				reward = next_node.rollout()
 				next_node.backup(reward)
+
+
+				if simulation_count%10 == 0 and tree_window is not None:
+					print("Rollout result: ", reward)
+					tree_window.draw_tree(next_node)
+					input()
+
 				simulation_count += 1
 				#past_nodes.append(next_node)
 			# self.print('')
@@ -58,7 +63,7 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 				return self.expanded_children[move]
 			new_game = self.game.clone()
 			new_game.make_move(move)
-			return AlphaMiniShogiSearchTree(new_game, self.model, self, from_move=move, simulation_limit=self.simulation_limit)
+			return AlphaMiniShogiSearchTree(new_game, self.model, self, from_move=move, simulation_limit=self.simulation_limit, exploration_constant=self.exploration_constant)
 			
 		def ucb(self, n, exploration_constant):
 			policy_index = AlphaMiniShogiSearchTree.get_output_index(n.from_move, n.game.current_player)
@@ -108,7 +113,7 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 				return 1
 			policy, reward = self.predict()
 			self.policy = policy
-			return reward[0]
+			return -reward[0] # Negative because it is from the viewpoint of the next mover, good for them is bad for us
 
 		def encode_input(self):
 			player_piece             = defaultdict(lambda: [np.zeros((MiniShogi.SIZE, MiniShogi.SIZE)), np.zeros((MiniShogi.SIZE, MiniShogi.SIZE))])

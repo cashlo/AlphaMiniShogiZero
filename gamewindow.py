@@ -4,7 +4,7 @@ import tkinter.font as tkFont
 from mini_shogi import MiniShogi
 
 class GameWindow:
-	def __init__(self, title='', canvas_size=600, font_size=20, line_width=2, show_title=True, on_click=None):
+	def __init__(self, title='', canvas_size=600, font_size=20, line_width=2, show_title=True, on_click=None, tree_window=False):
 		self.window = Tk()
 		self.window.title(title)
 		self.window.configure(bg="black")
@@ -21,10 +21,18 @@ class GameWindow:
 		self.margin_size = self.canvas_size/7
 		self.row_height = (self.canvas_size - self.margin_size*2)/MiniShogi.SIZE
 
-		self.canvas = Canvas(self.window, width=self.canvas_size, height=self.canvas_size, bg="#964B00")
+		self.canvas_width = self.canvas_size
+		if tree_window:
+			self.canvas_width = self.canvas_size*4	
+
+		self.canvas = Canvas(self.window, width=self.canvas_width, height=self.canvas_size, bg="#964B00")
 		self.canvas.bind('<Button-1>', self.click)
 		self.line_width=line_width
-		self.draw_lines()
+		if tree_window:
+			for i in range(4):
+				self.draw_lines(offset=self.canvas_size*i)
+		else:
+			self.draw_lines()
 		self.canvas.pack()
 
 		self.status_label = Label(self.window, text='', bg="black", fg="white", font=self.font_style)
@@ -45,19 +53,19 @@ class GameWindow:
 		self.on_click(x, y, promotion)
 
 
-	def draw_lines(self):		
+	def draw_lines(self, offset=0):		
 		for i in range(MiniShogi.SIZE+1):
 			self.canvas.create_line(
-				self.margin_size+i*self.row_height,
+				self.margin_size+i*self.row_height+offset,
 				self.margin_size,
-				self.margin_size+i*self.row_height,
+				self.margin_size+i*self.row_height+offset,
 				self.canvas_size-self.margin_size,
 				width=self.line_width
 			)
 			self.canvas.create_line(
-				self.margin_size,
+				self.margin_size+offset,
 				self.margin_size+i*self.row_height,
-				self.canvas_size-self.margin_size,
+				self.canvas_size-self.margin_size+offset,
 				self.margin_size+i*self.row_height,
 				width=self.line_width
 			)
@@ -103,7 +111,7 @@ class GameWindow:
 				return p
 
 
-	def draw_piece(self, piece):
+	def draw_piece(self, piece, offset=0):
 		if piece is None:
 			return
 		row_height = (self.canvas_size - self.margin_size*2 )/MiniShogi.SIZE
@@ -113,6 +121,8 @@ class GameWindow:
 			points = [1-p if i%2 else p for i, p in enumerate(points)]
 		position = piece.position if piece.position is not None else GameWindow.piece_to_capture_position(piece)
 		points = [self.margin_size+(position[i%2]+p)*row_height for i, p in enumerate(points)]
+		if offset:
+			points = [p if i%2 else p+offset for i, p in enumerate(points)]
 		self.canvas.create_polygon(
 			points,
 			fill="#FFD167",
@@ -120,13 +130,38 @@ class GameWindow:
 		)
 		font = tkFont.Font(family="Helvetica", size=40)
 		self.canvas.create_text(
-			self.margin_size+(position[0]+1/2)*row_height,
+			self.margin_size+(position[0]+1/2)*row_height+offset,
 			self.margin_size+(position[1]+1/2)*row_height,
 			text=piece.get_name(),
 			font=font,
 			tags = "piece",
 			angle=0  if piece.player else 180
 		)
+
+	def draw_tree(self, tree_node):
+
+		offset = self.canvas_width
+		self.canvas.delete('node_status')
+
+
+		first_draw = True
+		while offset >= 0 and tree_node is not None:
+			offset -= self.canvas_size
+			self.draw_board(tree_node.game, offset=offset, clear_board=first_draw)
+			self.draw_move(tree_node.from_move, clear_old_move=first_draw, arrow_width=10, offset=offset)
+			self.canvas.create_text(
+				self.margin_size*2+offset,
+				10,
+				text=f"Reward: {tree_node.reward} Visit count: {tree_node.visit_count}",
+				tags ="node_status"
+			)
+			tree_node = tree_node.parent
+			first_draw = False
+		# input()
+		self.window.update()
+		
+
+
 
 	def draw_possible_moves(self, moves, piece):
 		self.canvas.delete('possible_moves')
@@ -145,16 +180,18 @@ class GameWindow:
 				tags='possible_moves'
 			)
 
-	def draw_move(self, move, clear_old_move = True, score=1, arrow_width=20):
+	def draw_move(self, move, clear_old_move = True, score=1, arrow_width=20, offset=0):
 		if clear_old_move:
 			self.canvas.delete('move')
+		if move is None:
+			return	
 		
 		piece_type, old_position, new_position, promoted = move
 		if old_position is None:
 			self.canvas.create_line(
-				self.margin_size+(new_position[0]+0.5)*self.row_height,
+				self.margin_size+(new_position[0]+0.5)*self.row_height+offset,
 				self.margin_size+(new_position[1]+0.1)*self.row_height,
-				self.margin_size+(new_position[0]+0.5)*self.row_height,
+				self.margin_size+(new_position[0]+0.5)*self.row_height+offset,
 				self.margin_size+(new_position[1]+0.5)*self.row_height,
 				arrow=LAST,
 				arrowshape=(20,20,6),
@@ -164,9 +201,9 @@ class GameWindow:
 			)
 		else:	
 			self.canvas.create_line(
-				self.margin_size+(old_position[0]+0.5)*self.row_height,
+				self.margin_size+(old_position[0]+0.5)*self.row_height+offset,
 				self.margin_size+(old_position[1]+0.5)*self.row_height,
-				self.margin_size+(new_position[0]+0.5)*self.row_height,
+				self.margin_size+(new_position[0]+0.5)*self.row_height+offset,
 				self.margin_size+(new_position[1]+0.5)*self.row_height,
 				arrow=LAST,
 				arrowshape=(20,20,6),
@@ -177,13 +214,14 @@ class GameWindow:
 		self.window.update()
 
 
-	def draw_board(self, game):
-		self.canvas.delete('piece')
-		self.canvas.delete('possible_moves')
+	def draw_board(self, game, offset=0, clear_board=True):
+		if clear_board:
+			self.canvas.delete('piece')
+			self.canvas.delete('possible_moves')
 
 		for player_pieces in game.player_pieces:
 			for piece in player_pieces:
-				self.draw_piece(piece)
+				self.draw_piece(piece, offset=offset)
 		self.window.update()
 
 	def set_status(self, status):

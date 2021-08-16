@@ -1,8 +1,8 @@
 from monte_carlo_tree_search import Node
 
 class MiniShogiSearchTree(Node):
-	def __init__(self, game, parent=None, from_move=None):
-		Node.__init__(self, parent=parent, from_move=from_move)
+	def __init__(self, game, parent=None, from_move=None, exploration_constant=1):
+		Node.__init__(self, parent=parent, from_move=from_move, exploration_constant=exploration_constant)
 		self.game = game
 
 	def rollout(self):
