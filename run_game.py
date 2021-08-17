@@ -2,12 +2,32 @@ from gamewindow import GameWindow
 from mini_shogi import MiniShogi
 import time
 from mini_shogi_search_tree import MiniShogiSearchTree
-
+from alpha_go_zero_model import AlphaGoZeroModel
+from alpha_mini_shogi_search_tree import AlphaMiniShogiSearchTree
+import glob
+import tensorflow as tf
 
 game = MiniShogi.Game()
 game.setup()
 
-search_tree = MiniShogiSearchTree(game.clone())
+mind_window_1 = GameWindow("Current AI", show_title=False, line_width=4, canvas_size=400)
+
+best_net_so_far = AlphaGoZeroModel(
+		input_board_size=MiniShogi.SIZE,
+		number_of_input_planes=6*2*2+4*2,
+		policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6),
+		number_of_filters=64,
+		number_of_residual_block=20,
+		value_head_hidden_layer_size=64
+	).init_model()
+
+net_files = glob.glob(f'model_minishogi_*')
+if net_files:
+	lastest_model_file = max(net_files)
+	print(f"Lastest net: {lastest_model_file}")
+	best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)		
+
+search_tree = AlphaMiniShogiSearchTree(game.clone(), best_net_so_far,simulation_limit=1000)
 
 last_clicked_piece = None
 def on_click(x, y, promotion):
@@ -37,7 +57,7 @@ def on_click(x, y, promotion):
 					print("Winner is ", winner)
 					return
 	
-				search_tree = search_tree.search()
+				search_tree = search_tree.search(step=100, move_window=mind_window_1)
 				move = search_tree.from_move
 				game.make_move(move)
 				window.draw_board(game)
