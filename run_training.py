@@ -41,7 +41,7 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
 		# gui.set_status(f"Game {i+1}")
 		while game.check_game_over() is None:
 			# print(search_tree.game)
-			move = search_tree.search(step=game_steps_count, search=mind_window).from_move
+			move = search_tree.search(step=game_steps_count, move_window=mind_window).from_move
 
 			game_log['x'].append(search_tree.encode_input())
 			game_log['y'][0].append(search_tree.encode_output())
@@ -118,7 +118,7 @@ def net_vs(net_0, net_1, number_of_games, game_log, gui, mind_window_0, mind_win
 		print(f"Game {i+1}: {winner_count[0]}:{winner_count[1]}")
 	print(f"Net 0 win rate: {winner_count[0]/number_of_games:.0%}")
 	print(f"Net 1 win rate: {winner_count[1]/number_of_games:.0%}")
-	return winner_count[1]/number_of_games
+	return winner_count[1]/(winner_count[0]+1)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--gen-data", help="Generate new data with latest net", action="store_true")
@@ -199,8 +199,8 @@ if args.train_new_net:
 	net_files = glob.glob(f'model_minishogi_*')
 	if net_files:
 		lastest_model_file = max(net_files)
-		# print(f"Lastest net: {lastest_model_file}")
-		# best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
+		print(f"Lastest net: {lastest_model_file}")
+		best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
 
 	gui = GameWindow("Newly trained AI fight current AI to become the data generating AI")
 	mind_window_1 = GameWindow("Current AI", show_title=False, line_width=4, canvas_size=400)
@@ -252,7 +252,7 @@ if args.train_new_net:
 		start_time = time()
 		fresh_net_win_rate = net_vs(best_net_so_far, fresh_net, 20, net_vs_game_log, gui, mind_window_1, mind_window_2, sim_limit)
 		save_game_log(net_vs_game_log, sim_limit, f"net_vs_game_log_{sim_limit}.pickle")
-		if fresh_net_win_rate >= 0.65:
+		if fresh_net_win_rate >= 2:
 			gui.set_status("New net won!")
 			best_net_so_far = fresh_net
 			saved_model_dir = f'model_minishogi_{time()}'
