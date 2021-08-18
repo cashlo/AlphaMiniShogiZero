@@ -222,6 +222,7 @@ if args.train_new_net:
 
 		extra_game_log_files = glob.glob(f'game_log_minishogi_1000_*')
 		for file in extra_game_log_files:
+			print(f"Reading {file}")
 			extra_game_log = pickle.loads(open(file, "rb").read())
 
 			game_log['x'].extend( extra_game_log['x'] )
@@ -231,12 +232,20 @@ if args.train_new_net:
 		extra_game_log_files = glob.glob(f'mac_data/game_log_minishogi_1000_*')
 		for file in extra_game_log_files:
 			extra_game_log = pickle.loads(open(file, "rb").read())
-
+			print(f"Reading {file}")
+			
 			game_log['x'].extend( extra_game_log['x'] )
 			game_log['y'][0].extend( extra_game_log['y'][0] )
 			game_log['y'][1].extend( extra_game_log['y'][1] )
 
-
+		extra_game_log_files = glob.glob(f'lets_data/game_log_minishogi_1000_*')
+		for file in extra_game_log_files:
+			extra_game_log = pickle.loads(open(file, "rb").read())
+			print(f"Reading {file}")
+			
+			game_log['x'].extend( extra_game_log['x'] )
+			game_log['y'][0].extend( extra_game_log['y'][0] )
+			game_log['y'][1].extend( extra_game_log['y'][1] )
 
 		fresh_net.train_from_game_log(game_log)
 		print(f"Time taken: {time()-start_time}")

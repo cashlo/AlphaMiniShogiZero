@@ -27,7 +27,7 @@ if net_files:
 	print(f"Lastest net: {lastest_model_file}")
 	best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)		
 
-search_tree = AlphaMiniShogiSearchTree(game.clone(), best_net_so_far,simulation_limit=1000)
+search_tree = AlphaMiniShogiSearchTree(game.clone(), best_net_so_far,simulation_limit=200)
 
 last_clicked_piece = None
 def on_click(x, y, promotion):
