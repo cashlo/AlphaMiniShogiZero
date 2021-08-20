@@ -172,10 +172,6 @@ if args.gen_data:
 	
 
 if args.train_new_net:
-	game_log = {
-		'x': [],
-		'y': [[],[]]
-	}
 	net_vs_game_log = {
 		'x': [],
 		'y': [[],[]]
@@ -219,6 +215,11 @@ if args.train_new_net:
 			number_of_residual_block=10,
 			value_head_hidden_layer_size=32
 		).init_model()
+
+		game_log = {
+			'x': [],
+			'y': [[],[]]
+		}
 
 		extra_game_log_files = glob.glob(f'game_log_minishogi_1000_*')
 		for file in extra_game_log_files:
