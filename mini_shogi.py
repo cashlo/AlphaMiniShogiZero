@@ -11,7 +11,7 @@ class MiniShogi:
 			self.current_player = 1
 			self.player_pieces = [[], []]
 			self.board = MiniShogi.Board(MiniShogi.SIZE)
-			self.move_history = []
+			self.move_history = {}
 		
 		def setup(self):
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.ROOK,   (0, 0), False, 0))
@@ -28,12 +28,11 @@ class MiniShogi:
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   (0, 4), False, 1))
 			self.place_piece(MiniShogi.Piece(MiniShogi.PieceType.PAWN,   (0, 3), False, 1))
 
-		def is_repeating(self):
-			if len(self.move_history) < 6:
-				return False
-			if self.move_history[-1] == self.move_history[-5] and self.move_history[-2] == self.move_history[-6]:
-				return True
-			return False
+		def get_repeating_move(self):
+			board_key = self.board.to_tuple()
+			if board_key in self.move_history:
+				return self.move_history[board_key]
+			return None
 
 		def board_check(self):
 			return
@@ -59,6 +58,7 @@ class MiniShogi:
 				for p in pieces:
 					clone_game.place_piece(p.clone())
 			clone_game.current_player = self.current_player
+			clone_game.move_history  = self.move_history.copy()
 			return clone_game
 
 		def place_piece(self, piece):
@@ -70,7 +70,7 @@ class MiniShogi:
 
 		def make_move(self, move):
 			piece_type, old_position, new_position, promoted = move
-			self.move_history.append(move)
+			self.move_history[self.board.to_tuple()] = move
 			
 			piece = None
 			for p in self.player_pieces[self.current_player]:
@@ -102,7 +102,16 @@ class MiniShogi:
 			
 
 		def all_legal_move_list(self):
-			return list(self.all_legal_moves(self.current_player))
+			move_set = self.all_legal_moves(self.current_player)
+
+			# No repeating
+			repeating_move = self.get_repeating_move()
+			if repeating_move in move_set:
+				move_set.remove(repeating_move)
+
+			return list(move_set)
+
+
 
 		def random_move(self):
 			return random.sample(self.all_legal_move_list(), 1)[0]

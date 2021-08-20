@@ -52,8 +52,6 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
 			gui.draw_move(move)
 
 			search_tree = search_tree.create_from_move(move)
-			if game.is_repeating():
-				break
 			if game_steps_count >= 100:
 				break
 		winner = game.check_game_over()
@@ -104,8 +102,6 @@ def net_vs(net_0, net_1, number_of_games, game_log, gui, mind_window_0, mind_win
 			player = 1-player
 			tree_dict[player][1] = tree_dict[player][1].create_from_move(move)
 			# game.board.print()
-			if game.is_repeating():
-				break
 			if game_steps_count >= 100:
 				break
 		game.print()
