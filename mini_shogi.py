@@ -171,6 +171,15 @@ class MiniShogi:
 			self.size = size
 			self.board = [ [None]*size for i in range(size) ]
 
+		def __hash__(self):
+			return hash(self.to_tuple())
+
+		def __eq__(self, other):
+			return self.size == other.size and self.to_tuple() == other.to_tuple()
+
+		def to_tuple(self):
+			return tuple( tuple(p.to_tuple() if p else None for p in rank) for rank in self.board )
+
 		def is_position_on_board(self, position):
 			if position[0] < 0 or position[1]< 0:
 				return False
@@ -241,6 +250,18 @@ class MiniShogi:
 			self.position = position
 			self.promoted = promoted
 			self.player = player
+
+		def __hash__(self):
+			return hash(self.to_tuple())
+
+		def __eq__(self, other):
+			if other is None:
+				return False
+
+			return self.to_tuple() == other.to_tuple()
+
+		def to_tuple(self):
+			return (self.pieceType, self.position, self.promoted, self.player)
 
 		def clone(self):
 			return MiniShogi.Piece(self.pieceType, self.position, self.promoted, self.player)

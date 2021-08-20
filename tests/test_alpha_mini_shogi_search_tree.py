@@ -24,12 +24,26 @@ class TestAlphaMiniShogiSearchTreeMethods(unittest.TestCase):
 
 	def test_search(self):
 		game = setup_puzzle1()
-		tree = AlphaMiniShogiSearchTree(game, AlphaGoZeroModel(input_board_size=MiniShogi.SIZE, number_of_input_planes=6*2*2, policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6)).init_model())
+		tree = AlphaMiniShogiSearchTree(game, AlphaGoZeroModel(
+			input_board_size=MiniShogi.SIZE,
+			number_of_input_planes=6*2*2+4*2,
+			policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6),
+			number_of_filters=64,
+			number_of_residual_block=20,
+			value_head_hidden_layer_size=64
+		).init_model())
 		print("Reward: ", tree.search().reward)
 		
 		game = setup_puzzle2()
 		# game.current_player = 0
-		tree = AlphaMiniShogiSearchTree(game, AlphaGoZeroModel(input_board_size=MiniShogi.SIZE, number_of_input_planes=6*2*2, policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6)).init_model())
+		tree = AlphaMiniShogiSearchTree(game, AlphaGoZeroModel(
+			input_board_size=MiniShogi.SIZE,
+			number_of_input_planes=6*2*2+4*2,
+			policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6),
+			number_of_filters=64,
+			number_of_residual_block=20,
+			value_head_hidden_layer_size=64
+		).init_model())
 		print("Reward: ", tree.search().reward)
 		
 		# print(tree.predict())
