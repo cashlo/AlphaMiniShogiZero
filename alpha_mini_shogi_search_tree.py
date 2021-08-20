@@ -33,7 +33,10 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 
 				# next_node.board.print()
 				reward = next_node.rollout()
+				# print("Rollout reward: ", reward)
 				next_node.backup(reward)
+				# print("Current reward: ", self.reward)
+				
 
 
 				if simulation_count%10 == 0 and tree_window is not None:

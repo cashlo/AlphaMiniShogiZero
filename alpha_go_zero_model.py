@@ -4,6 +4,8 @@ from tensorflow.keras.layers import Activation, BatchNormalization, Dense, Flatt
 from tensorflow.keras.optimizers import Adam, SGD
 from tensorflow.keras.regularizers import l2
 
+
+import glob
 import numpy as np
 
 def rotate_data(data, board_size, rotations):
@@ -89,6 +91,13 @@ class AlphaGoZeroModel:
 
         
         return self
+
+    def load_model(self, model_folder = ''):
+        net_files = glob.glob(f'{model_folder}model_minishogi_*')
+        if net_files:
+            lastest_model_file = max(net_files)
+            # print(f"Lastest net: {lastest_model_file}")
+            self.model = tf.keras.models.load_model(lastest_model_file)
 
     def evaluate_from_game_log(self, game_log):
         x = np.array(game_log['x'])
