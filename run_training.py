@@ -30,6 +30,13 @@ def save_game_log(game_log, sim_limit, file_name=None):
 	f = open(file_name, "wb")
 	f.write(pickle.dumps(game_log))
 	f.close()
+
+def extend_game_log(current_game_log, new_game_log, discard_head=0):
+	discard_head_index = int(len(new_game_log['x'])*discard_head)
+
+	current_game_log['x'].extend( new_game_log['x'][discard_head_index:] )
+	current_game_log['y'][0].extend( new_game_log['y'][0][discard_head_index:] )
+	current_game_log['y'][1].extend( new_game_log['y'][1][discard_head_index:] )
 		
 
 def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_limit=50):
@@ -221,28 +228,19 @@ if args.train_new_net:
 		for file in extra_game_log_files:
 			print(f"Reading {file}")
 			extra_game_log = pickle.loads(open(file, "rb").read())
-
-			game_log['x'].extend( extra_game_log['x'] )
-			game_log['y'][0].extend( extra_game_log['y'][0] )
-			game_log['y'][1].extend( extra_game_log['y'][1] )
+			extend_game_log(game_log, extra_game_log, 0)
 
 		extra_game_log_files = glob.glob(f'mac_data/game_log_minishogi_1000_*')
 		for file in extra_game_log_files:
 			extra_game_log = pickle.loads(open(file, "rb").read())
 			print(f"Reading {file}")
-			
-			game_log['x'].extend( extra_game_log['x'] )
-			game_log['y'][0].extend( extra_game_log['y'][0] )
-			game_log['y'][1].extend( extra_game_log['y'][1] )
+			extend_game_log(game_log, extra_game_log, 0)
 
 		extra_game_log_files = glob.glob(f'lets_data/game_log_minishogi_1000_*')
 		for file in extra_game_log_files:
 			extra_game_log = pickle.loads(open(file, "rb").read())
 			print(f"Reading {file}")
-			
-			game_log['x'].extend( extra_game_log['x'] )
-			game_log['y'][0].extend( extra_game_log['y'][0] )
-			game_log['y'][1].extend( extra_game_log['y'][1] )
+			extend_game_log(game_log, extra_game_log, 0)
 
 		fresh_net.train_from_game_log(game_log)
 		print(f"Time taken: {time()-start_time}")
