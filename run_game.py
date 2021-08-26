@@ -10,7 +10,6 @@ import tensorflow as tf
 game = MiniShogi.Game()
 game.setup()
 
-mind_window_1 = GameWindow("Current AI", show_title=False, line_width=4, canvas_size=400)
 
 best_net_so_far = AlphaGoZeroModel(
 		input_board_size=MiniShogi.SIZE,
@@ -27,7 +26,7 @@ if net_files:
 	print(f"Lastest net: {lastest_model_file}")
 	best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)		
 
-search_tree = AlphaMiniShogiSearchTree(game.clone(), best_net_so_far,simulation_limit=200)
+search_tree = AlphaMiniShogiSearchTree(game.clone(), best_net_so_far,simulation_limit=400)
 
 last_clicked_piece = None
 def on_click(x, y, promotion):
@@ -84,6 +83,8 @@ def make_random_move():
 		print("Winner: ", winner)
 
 window = GameWindow("Mini Shogi", on_click=on_click)
+mind_window_1 = GameWindow("Current AI", show_title=False, line_width=4, canvas_size=400)
+
 
 window.draw_board(game)
 # window.window.after(1, make_random_move)
