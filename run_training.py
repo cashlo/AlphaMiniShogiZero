@@ -131,6 +131,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--gen-data", help="Generate new data with latest net", action="store_true")
 parser.add_argument("--train-new-net", help="Train new NN", action="store_true")
 parser.add_argument("--headless", help="Run without GUI", action="store_true")
+parser.add_argument("--file", type=str, help="File name to store game log")
 parser.add_argument("id", type=int, help="instant id", default=0, nargs='?')
 
 args = parser.parse_args()
@@ -183,7 +184,11 @@ if args.gen_data:
         else:
             gui.set_status("Generating new data...")
         generate_data(game_log, best_net_so_far, 1, gui, None, sim_limit)
-        save_game_log(game_log, sim_limit, file_name=f"game_log_minishogi_{sim_limit}_{args.id}.pickle")
+        file_name = f"game_log_minishogi_{sim_limit}_{args.id}.pickle"
+        if args.file:
+            file_name = args.file
+
+        save_game_log(game_log, sim_limit, file_name=file_name)
         if not args.headless:
             gui.set_status(f"Time taken: {time()-start_time}")          
 
