@@ -366,7 +366,8 @@ class MiniShogi:
 
 			for m in moveType.long_moves():
 				new_position = ( self.position[0], self.position[1], False )
-				while new_position := ( new_position[0] + m[0], new_position[1] + m[1], False ):
+				while True:
+					new_position = ( new_position[0] + m[0], new_position[1] + m[1], False )
 					if not board.is_position_on_board(new_position):
 						break
 					capturing_piece = board.piece_at(new_position)
