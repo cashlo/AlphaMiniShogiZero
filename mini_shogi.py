@@ -233,7 +233,8 @@ class MiniShogi:
 			for d in directions:
 				line_between = set()
 				new_position = ( position1[0], position1[1] )
-				while new_position := ( new_position[0] + d[0], new_position[1] + d[1] ):
+				while True:
+					new_position = ( new_position[0] + d[0], new_position[1] + d[1] )
 					if not self.is_position_on_board(new_position):
 						break
 					if new_position == position2:
