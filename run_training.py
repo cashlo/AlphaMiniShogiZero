@@ -259,6 +259,12 @@ if args.train_new_net:
             print(f"Reading {file}")
             extend_game_log(game_log, extra_game_log, 0)
 
+        extra_game_log_files = glob.glob(f'ryzen_data/game_log_minishogi_1000_*')
+        for file in extra_game_log_files:
+            extra_game_log = pickle.loads(open(file, "rb").read())
+            print(f"Reading {file}")
+            extend_game_log(game_log, extra_game_log, 0)
+
         extra_game_log_files = glob.glob(f'lets_data/game_log_minishogi_1000_*')
         for file in extra_game_log_files:
             extra_game_log = pickle.loads(open(file, "rb").read())
