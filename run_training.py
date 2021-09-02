@@ -47,6 +47,7 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
         # gui.set_status(f"Game {i+1}")
         while game.check_game_over() is None:
             # print(search_tree.game)
+            start_time = time()
             move = search_tree.search(step=game_steps_count, move_window=mind_window).from_move
 
             game_log['x'].append(search_tree.encode_input())
@@ -57,6 +58,7 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
             if gui is not None:
                 gui.draw_board(game)
                 gui.draw_move(move)
+                gui.set_status(f"Game {i+1}: move time {time()-start_time}s")
             else:
                 game.print()
 
