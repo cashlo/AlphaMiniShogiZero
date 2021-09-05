@@ -30,4 +30,40 @@ class TestMiniShogi(unittest.TestCase):
 		game = game.clone()
 		self.assertListEqual( sorted(game.all_legal_move_list()), [(MiniShogi.PieceType.KING, (4, 4), (3, 3), False), (MiniShogi.PieceType.KING, (4, 4), (3,4), False)] )
 
+	def test_promotion_moves(self):
+		game = MiniShogi.Game()
+		test_piece_1 = MiniShogi.Piece(MiniShogi.PieceType.BISHOP, (4, 4), False, 1)
+		game.place_piece(test_piece_1)
+		self.assertListEqual(sorted(test_piece_1.get_moves(game.board)), [(0, 0, False), (0, 0, True), (1, 1, False), (2, 2, False), (3, 3, False)])
+
+		game = MiniShogi.Game()
+		test_piece_2 = MiniShogi.Piece(MiniShogi.PieceType.BISHOP, (3, 0), False, 1)
+		game.place_piece(test_piece_2)
+		self.assertListEqual(sorted(test_piece_2.get_moves(game.board)), [
+			(0, 3, False),(0, 3, True),
+			(1, 2, False),(1, 2, True),
+			(2, 1, False),(2, 1, True),
+			(4, 1, False),(4, 1, True)
+		])
+
+		game = MiniShogi.Game()
+		test_piece_3 = MiniShogi.Piece(MiniShogi.PieceType.SILVER, (0, 1), False, 1)
+		game.place_piece(test_piece_3)
+		self.assertListEqual(sorted(test_piece_3.get_moves(game.board)), [(0, 0, False), (0, 0, True), (1, 0, False), (1, 0, True), (1, 2, False)])
+
+		game = MiniShogi.Game()
+		test_piece_4 = MiniShogi.Piece(MiniShogi.PieceType.SILVER, (1, 0), False, 1)
+		game.place_piece(test_piece_4)
+		self.assertListEqual(sorted(test_piece_4.get_moves(game.board)), [(0, 1, False), (0, 1, True), (2, 1, False), (2, 1, True)])
+
+		game = MiniShogi.Game()
+		test_piece_5 = MiniShogi.Piece(MiniShogi.PieceType.SILVER, (1, 0), False, 0)
+		game.place_piece(test_piece_5)
+		self.assertListEqual(sorted(test_piece_5.get_moves(game.board)), [(0, 1, False), (1, 1, False), (2, 1, False)])
+
+
+
+
+
+
 

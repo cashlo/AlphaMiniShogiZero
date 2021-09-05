@@ -307,6 +307,11 @@ class MiniShogi:
 				return False
 			return True
 
+		def can_be_promoted(self, new_position):
+			if self.player == 0:
+				return new_position[1] == 4 or self.position[1] == 4
+			else:
+				return new_position[1] == 0 or self.position[1] == 0
 
 		def get_moves(self, board, position_only = False, ignore_piece = None):
 			valid_moves = set()
@@ -358,7 +363,7 @@ class MiniShogi:
 				valid_moves.add(new_position)
 
 				# Promotion option
-				if (self.player == 0 and new_position[1] == 4) or (self.player == 1 and new_position[1] == 0):
+				if self.can_be_promoted(new_position):
 					if self.pieceType == MiniShogi.PieceType.PAWN:
 						valid_moves.remove( new_position )
 					if self.pieceType not in {MiniShogi.PieceType.KING, MiniShogi.PieceType.GOLD}:
@@ -376,7 +381,7 @@ class MiniShogi:
 					valid_moves.add(new_position)
 
 					# Promotion option
-					if (self.player == 0 and new_position[1] == 4) or (self.player == 1 and new_position[1] == 0):
+					if self.can_be_promoted(new_position):
 						if self.pieceType == MiniShogi.PieceType.PAWN:
 							valid_moves.remove( new_position )
 						if self.pieceType not in {MiniShogi.PieceType.KING, MiniShogi.PieceType.GOLD}:
