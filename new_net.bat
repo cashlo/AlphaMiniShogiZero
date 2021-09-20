@@ -1,1 +1,1 @@
-python run_training.py --train-new-net
+py run_training.py --train-new-net

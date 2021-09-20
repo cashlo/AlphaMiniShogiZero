@@ -202,7 +202,7 @@ if args.train_new_net:
         'y': [[],[]]
     }
 
-    sim_limit = 100
+    sim_limit = 10
     
     if os.path.isfile(f"net_vs_game_log_minishogi_{sim_limit}.pickle"):
         net_vs_game_log = pickle.loads(open(f"net_vs_game_log_minishogi_{sim_limit}.pickle", "rb").read())
@@ -249,29 +249,31 @@ if args.train_new_net:
             'y': [[],[]]
         }
 
+        drop_data_head = 0
+
         extra_game_log_files = glob.glob(f'game_log_minishogi_1000_*')
         for file in extra_game_log_files:
             print(f"Reading {file}")
             extra_game_log = pickle.loads(open(file, "rb").read())
-            extend_game_log(game_log, extra_game_log, 0)
+            extend_game_log(game_log, extra_game_log, drop_data_head)
 
         extra_game_log_files = glob.glob(f'mac_data/game_log_minishogi_1000_*')
         for file in extra_game_log_files:
             extra_game_log = pickle.loads(open(file, "rb").read())
             print(f"Reading {file}")
-            extend_game_log(game_log, extra_game_log, 0)
+            extend_game_log(game_log, extra_game_log, drop_data_head)
 
-        extra_game_log_files = glob.glob(f'ryzen_data/game_log_minishogi_1000_*')
+        extra_game_log_files = glob.glob(f'alien_data/game_log_minishogi_1000_*')
         for file in extra_game_log_files:
             extra_game_log = pickle.loads(open(file, "rb").read())
             print(f"Reading {file}")
-            extend_game_log(game_log, extra_game_log, 0)
+            extend_game_log(game_log, extra_game_log, drop_data_head)
 
         extra_game_log_files = glob.glob(f'lets_data/game_log_minishogi_1000_*')
         for file in extra_game_log_files:
             extra_game_log = pickle.loads(open(file, "rb").read())
             print(f"Reading {file}")
-            extend_game_log(game_log, extra_game_log, 0)
+            extend_game_log(game_log, extra_game_log, drop_data_head)
 
         fresh_net.train_from_game_log(game_log)
         print(f"Time taken: {time()-start_time}")
