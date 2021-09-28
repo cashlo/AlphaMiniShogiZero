@@ -57,7 +57,7 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 				return max(self.expanded_children.values(), key = lambda c: c.visit_count)
 			child_list = list(self.expanded_children.values())
 			probability_list = np.array([c.visit_count for c in child_list])
-			probability_list = probability_list + probability_list.sum()/2 # Extra Randomness
+			probability_list = probability_list + probability_list.sum()/10 # Extra Randomness
 			probability_list = probability_list / probability_list.sum()
 			return np.random.choice(child_list, p=probability_list)
 

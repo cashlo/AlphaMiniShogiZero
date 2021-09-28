@@ -116,4 +116,4 @@ class AlphaGoZeroModel:
         def step_decay(epoch):
             return 2e-4*(0.4**(epoch+1))
         callback = tf.keras.callbacks.LearningRateScheduler(step_decay)
-        self.model.fit(x, [y0, y1], shuffle=True, batch_size=32, epochs=6, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
+        self.model.fit(x, [y0, y1], shuffle=True, batch_size=32, epochs=3, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])

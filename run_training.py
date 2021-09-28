@@ -120,7 +120,6 @@ def net_vs(net_0, net_1, number_of_games, game_log, gui, mind_window_0, mind_win
         game.print()
         result = game.check_game_over()
         backfill_end_reward(game_log, game_steps_count, result, 1-player)
-        #if result != Gomoku.DRAW:
         if result is not None:
             winner = tree_dict[result][0]
             winner_count[winner] += 1
@@ -202,7 +201,7 @@ if args.train_new_net:
         'y': [[],[]]
     }
 
-    sim_limit = 10
+    sim_limit = 500
     
     if os.path.isfile(f"net_vs_game_log_minishogi_{sim_limit}.pickle"):
         net_vs_game_log = pickle.loads(open(f"net_vs_game_log_minishogi_{sim_limit}.pickle", "rb").read())
@@ -240,7 +239,7 @@ if args.train_new_net:
             number_of_input_planes=6*2*2+4*2,
             policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6),
             number_of_filters=32,
-            number_of_residual_block=10,
+            number_of_residual_block=20,
             value_head_hidden_layer_size=32
         ).init_model()
 
