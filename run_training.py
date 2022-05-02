@@ -1,6 +1,7 @@
 from alpha_go_zero_model import AlphaGoZeroModel
 from mini_shogi import MiniShogi
 from alpha_mini_shogi_search_tree import AlphaMiniShogiSearchTree
+from game_log_data_generator import GameLogDataGenerator
 from time import time
 import pickle
 import tensorflow as tf
@@ -256,25 +257,7 @@ if args.train_new_net:
             extra_game_log = pickle.loads(open(file, "rb").read())
             extend_game_log(game_log, extra_game_log, drop_data_head)
 
-        extra_game_log_files = glob.glob(f'mac_data/game_log_minishogi_1000_*')
-        for file in extra_game_log_files:
-            extra_game_log = pickle.loads(open(file, "rb").read())
-            print(f"Reading {file}")
-            extend_game_log(game_log, extra_game_log, drop_data_head)
-
-        extra_game_log_files = glob.glob(f'alien_data/game_log_minishogi_1000_*')
-        for file in extra_game_log_files:
-            extra_game_log = pickle.loads(open(file, "rb").read())
-            print(f"Reading {file}")
-            extend_game_log(game_log, extra_game_log, drop_data_head)
-
-        extra_game_log_files = glob.glob(f'lets_data/game_log_minishogi_1000_*')
-        for file in extra_game_log_files:
-            extra_game_log = pickle.loads(open(file, "rb").read())
-            print(f"Reading {file}")
-            extend_game_log(game_log, extra_game_log, drop_data_head)
-
-        fresh_net.train_from_game_log(game_log)
+        fresh_net.train_from_game_log_gen(GameLogDataGenerator(32))
         print(f"Time taken: {time()-start_time}")
 
         print("Evaluate old net:")

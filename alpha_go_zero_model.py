@@ -117,3 +117,10 @@ class AlphaGoZeroModel:
             return 2e-4*(0.4**(epoch+1))
         callback = tf.keras.callbacks.LearningRateScheduler(step_decay)
         self.model.fit(x, [y0, y1], shuffle=True, batch_size=32, epochs=3, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
+
+    def train_from_game_log_gen(self, game_log_gen):
+        def step_decay(epoch):
+            return 2e-4*(0.4**(epoch+1))
+        callback = tf.keras.callbacks.LearningRateScheduler(step_decay)
+        self.model.fit_generator(generator=game_log_gen, shuffle=False, epochs=3, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
+
