@@ -218,7 +218,7 @@ if args.train_new_net:
 
     net_files = glob.glob(f'model_minishogi_*')
     if net_files:
-        lastest_model_file = max(net_files)
+        lastest_model_file = max(net_files) #'model_minishogi_1630064974.349887'
         print(f"Lastest net: {lastest_model_file}")
         best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
 
@@ -238,9 +238,9 @@ if args.train_new_net:
             input_board_size=MiniShogi.SIZE,
             number_of_input_planes=6*2*2+4*2,
             policy_output_size=MiniShogi.SIZE*(MiniShogi.SIZE+1)*(MiniShogi.SIZE*MiniShogi.SIZE+6),
-            number_of_filters=32,
-            number_of_residual_block=20,
-            value_head_hidden_layer_size=32
+            number_of_filters=128,
+            number_of_residual_block=40,
+            value_head_hidden_layer_size=64
         ).init_model()
 
         game_log = {
