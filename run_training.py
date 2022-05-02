@@ -257,7 +257,7 @@ if args.train_new_net:
             extra_game_log = pickle.loads(open(file, "rb").read())
             extend_game_log(game_log, extra_game_log, drop_data_head)
 
-        fresh_net.train_from_game_log_gen(GameLogDataGenerator(32))
+        fresh_net.train_from_game_log_gen(GameLogDataGenerator('**/game_log_minishogi_1000_*', 256))
         print(f"Time taken: {time()-start_time}")
 
         print("Evaluate old net:")
