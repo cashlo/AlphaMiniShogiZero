@@ -6,6 +6,7 @@ from alpha_go_zero_model import AlphaGoZeroModel
 from alpha_mini_shogi_search_tree import AlphaMiniShogiSearchTree
 import glob
 import tensorflow as tf
+import concurrent.futures
 
 game = MiniShogi.Game()
 game.setup()
@@ -37,8 +38,8 @@ if net_files:
     print("Pick player 1:")
     for i, file in enumerate(net_files):
         print(f"{i}: {file}")
-    file_index = int(input())
-    picked_model_file = net_files[file_index]
+    #file_index = int(input())
+    picked_model_file = max(net_files)
     print(f"Picked: {picked_model_file}")
     player_1_model.model = tf.keras.models.load_model(picked_model_file)
 
@@ -46,8 +47,8 @@ if net_files:
     print(f"-1: Human")
     for i, file in enumerate(net_files):
         print(f"{i}: {file}")
-    file_index = int(input())
-    if file_index == -1:
+    #file_index = int(input())
+    if -1 == -1:
         human_player_2 = True
     else:
         picked_model_file = net_files[file_index]
@@ -120,13 +121,37 @@ window = GameWindow("Mini Shogi", on_click=on_click)
 mind_window_1 = GameWindow("Player 1", show_title=False, line_width=4, canvas_size=400)
 mind_window_2 = GameWindow("Player 2", show_title=False, line_width=4, canvas_size=400)
 
+merged_window = GameWindow("Merged result", show_title=False, line_width=4, canvas_size=400)
+
+number_of_threads = 3
+thread_windows = [GameWindow(f"Thread {t}", show_title=False, line_width=4, canvas_size=400) for t in range(number_of_threads)]
+
+
 
 def player_1_move():
     global search_tree_1
     global search_tree_2
     global mind_window_1
 
-    search_tree_1 = search_tree_1.search(step=100, move_window=mind_window_1)
+    thread_trees = []
+    futures = []
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        for t in range(number_of_threads):
+            search_tree_clone = AlphaMiniShogiSearchTree(game.clone(), player_1_model,simulation_limit=600)
+            futures.append(executor.submit(search_tree_clone.search, step=100, move_window=None))
+            thread_trees.append(search_tree_clone)
+    
+    for t in range(number_of_threads):
+        futures[t].result()
+        thread_trees[t].draw_children(thread_windows[t])
+        search_tree_1.merge_children(thread_trees[t])
+
+    search_tree_1.draw_children(merged_window)
+
+
+    search_tree_1 = search_tree_1.most_visited_child()
+    
     move = search_tree_1.from_move
     game.make_move(move)
     if not human_player_2:

@@ -243,29 +243,9 @@ if args.train_new_net:
             number_of_residual_block=40,
             value_head_hidden_layer_size=64
         ).init_model()
-
-        game_log = {
-            'x': [],
-            'y': [[],[]]
-        }
-
-        drop_data_head = 0
-
-        extra_game_log_files = glob.glob(f'game_log_minishogi_1000_*')
-        for file in extra_game_log_files:
-            print(f"Reading {file}")
-            extra_game_log = pickle.loads(open(file, "rb").read())
-            extend_game_log(game_log, extra_game_log, drop_data_head)
-
+        
         fresh_net.train_from_game_log_gen(GameLogDataGenerator('**/game_log_minishogi_1000_*', 1024))
         print(f"Time taken: {time()-start_time}")
-
-        print("Evaluate old net:")
-        #best_net_so_far.model.summary()
-        print(best_net_so_far.evaluate_from_game_log(game_log))
-        print("Evaluate new net:")
-        #fresh_net.model.summary()
-        print(fresh_net.evaluate_from_game_log(game_log))
 
         if not args.headless:
             gui.set_status("Checking new net performance...")
