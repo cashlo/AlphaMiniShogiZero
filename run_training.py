@@ -10,6 +10,7 @@ import glob
 import os
 import argparse
 import sys
+import concurrent.futures
 
 def backfill_end_reward(game_log, game_steps_count, result, last_player):
     game_reward = [0]*game_steps_count
@@ -26,7 +27,7 @@ def backfill_end_reward(game_log, game_steps_count, result, last_player):
 
 def save_game_log(game_log, sim_limit, file_name=None):
     if not file_name:
-        file_name=f"game_log_minishogi_{sim_limit}.pickle"
+        file_name=f"game_log_minishogi_{sim_limit}_t3.pickle"
     f = open(file_name, "wb")
     f.write(pickle.dumps(game_log))
     f.close()
@@ -49,7 +50,22 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
         while game.check_game_over() is None:
             # print(search_tree.game)
             start_time = time()
-            move = search_tree.search(step=game_steps_count, move_window=mind_window).from_move
+
+            number_of_threads = 3
+            thread_trees = []
+            futures = []
+
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                for t in range(number_of_threads):
+                    search_tree_clone = AlphaMiniShogiSearchTree(game.clone(), net,simulation_limit=simulation_limit)
+                    futures.append(executor.submit(search_tree_clone.search, step=game_steps_count, move_window=None))
+                    thread_trees.append(search_tree_clone)
+
+            for t in range(number_of_threads):
+                futures[t].result()
+                search_tree.merge_children(thread_trees[t])
+
+            move = search_tree.most_visited_child(random=game_steps_count <= 10).from_move
 
             game_log['x'].append(search_tree.encode_input())
             game_log['y'][0].append(search_tree.encode_output())
@@ -186,7 +202,7 @@ if args.gen_data:
         else:
             gui.set_status("Generating new data...")
         generate_data(game_log, best_net_so_far, 1, gui, None, sim_limit)
-        file_name = f"game_log_minishogi_{sim_limit}_{args.id}.pickle"
+        file_name = f"game_log_minishogi_{sim_limit}_{args.id}_t3.pickle"
         if args.file:
             file_name = args.file
 
@@ -243,7 +259,7 @@ if args.train_new_net:
             number_of_residual_block=40,
             value_head_hidden_layer_size=64
         ).init_model()
-        
+
         fresh_net.train_from_game_log_gen(GameLogDataGenerator('**/game_log_minishogi_1000_*', 1024))
         print(f"Time taken: {time()-start_time}")
 
