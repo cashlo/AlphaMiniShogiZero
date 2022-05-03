@@ -12,6 +12,8 @@ import argparse
 import sys
 import concurrent.futures
 
+number_of_threads = 3
+
 def backfill_end_reward(game_log, game_steps_count, result, last_player):
     game_reward = [0]*game_steps_count
     index = game_steps_count-1
@@ -27,7 +29,7 @@ def backfill_end_reward(game_log, game_steps_count, result, last_player):
 
 def save_game_log(game_log, sim_limit, file_name=None):
     if not file_name:
-        file_name=f"game_log_minishogi_{sim_limit}_t3.pickle"
+        file_name=f"game_log_minishogi_{sim_limit}_t{number_of_threads}.pickle"
     f = open(file_name, "wb")
     f.write(pickle.dumps(game_log))
     f.close()
@@ -51,7 +53,6 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
             # print(search_tree.game)
             start_time = time()
 
-            number_of_threads = 3
             thread_trees = []
             futures = []
 
@@ -164,8 +165,8 @@ if args.gen_data:
         'x': [],
         'y': [[],[]]
     }
-    if os.path.isfile(f"game_log_minishogi_{sim_limit}_{args.id}.pickle"):
-        game_log = pickle.loads(open(f"game_log_minishogi_{sim_limit}_{args.id}.pickle", "rb").read())
+    if os.path.isfile(f"game_log_minishogi_{sim_limit}_{args.id}_t{number_of_threads}.pickle"):
+        game_log = pickle.loads(open(f"game_log_minishogi_{sim_limit}_{args.id}_t{number_of_threads}.pickle", "rb").read())
 
     best_net_so_far = AlphaGoZeroModel(
             input_board_size=MiniShogi.SIZE,
@@ -202,7 +203,7 @@ if args.gen_data:
         else:
             gui.set_status("Generating new data...")
         generate_data(game_log, best_net_so_far, 1, gui, None, sim_limit)
-        file_name = f"game_log_minishogi_{sim_limit}_{args.id}_t3.pickle"
+        file_name = f"game_log_minishogi_{sim_limit}_{args.id}_t{number_of_threads}.pickle"
         if args.file:
             file_name = args.file
 
