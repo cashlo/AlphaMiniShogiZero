@@ -10,7 +10,7 @@ import random
 
 class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 
-		def __init__(self, game, model, parent=None, from_move=None, simulation_limit=1500, exploration_constant=10, dirichlet_alpha=0.03, noise_weight=0.5):
+		def __init__(self, game, model, parent=None, from_move=None, simulation_limit=1500, exploration_constant=20, dirichlet_alpha=0.03, noise_weight=0.50):
 			MiniShogiSearchTree.__init__(self, game, parent=parent, from_move=from_move, exploration_constant=exploration_constant)
 			self.simulation_limit = simulation_limit
 			self.model = model
@@ -69,14 +69,14 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 			# code.interact(local=locals())
 			# print(f"Number of sumulation: {simulation_count}")
 			# print(f"thinking time: {time()-start_time}")
-			return self.most_visited_child(random=step <= 10)
+			return self.most_visited_child(random=step <= 4)
 
 		def most_visited_child(self, random=False):
 			if not random:
 				return max(self.expanded_children.values(), key = lambda c: c.visit_count)
 			child_list = list(self.expanded_children.values())
 			probability_list = np.array([c.visit_count for c in child_list])
-			probability_list = probability_list + probability_list.sum()/10 # Extra Randomness
+			#probability_list = probability_list + probability_list.sum()/10 # Extra Randomness
 			probability_list = probability_list / probability_list.sum()
 			return np.random.choice(child_list, p=probability_list)
 

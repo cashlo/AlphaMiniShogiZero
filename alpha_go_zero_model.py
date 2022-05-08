@@ -79,8 +79,8 @@ class AlphaGoZeroModel:
         return x
 
     def predict(self, input):
-        with model_lock:
-            return self.model.predict(input)
+        #with model_lock:
+        return self.model.predict(input)
         
     def init_model(self):
         input_tensor = Input((self.input_board_size, self.input_board_size, self.number_of_input_planes))
@@ -95,6 +95,12 @@ class AlphaGoZeroModel:
 
         
         return self
+
+    def clone(self):
+        import copy
+        clone = copy.copy(self)
+        clone.model = tf.keras.models.clone_model(self.model)
+        return clone
 
     def load_model(self, model_folder = ''):
         net_files = glob.glob(f'{model_folder}model_minishogi_*')
@@ -126,5 +132,5 @@ class AlphaGoZeroModel:
         def step_decay(epoch):
             return 2e-4*(0.4**(epoch+1))
         callback = tf.keras.callbacks.LearningRateScheduler(step_decay)
-        self.model.fit_generator(generator=game_log_gen, shuffle=False, epochs=1, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
+        self.model.fit_generator(generator=game_log_gen, shuffle=False, epochs=3, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
 

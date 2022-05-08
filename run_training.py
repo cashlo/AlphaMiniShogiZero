@@ -12,7 +12,7 @@ import argparse
 import sys
 import concurrent.futures
 
-number_of_threads = 3
+number_of_threads = 4
 
 def backfill_end_reward(game_log, game_steps_count, result, last_player):
     game_reward = [0]*game_steps_count
@@ -58,7 +58,7 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
 
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 for t in range(number_of_threads):
-                    search_tree_clone = AlphaMiniShogiSearchTree(game.clone(), net,simulation_limit=simulation_limit)
+                    search_tree_clone = AlphaMiniShogiSearchTree(game.clone(), net.clone(),simulation_limit=simulation_limit)
                     futures.append(executor.submit(search_tree_clone.search, step=game_steps_count, move_window=None))
                     thread_trees.append(search_tree_clone)
 
@@ -159,7 +159,7 @@ if not args.headless:
     from gamewindow import GameWindow
 
 if args.gen_data:
-    sim_limit = 1000//number_of_threads
+    sim_limit = 1000
 
     game_log = {
         'x': [],
@@ -261,7 +261,7 @@ if args.train_new_net:
             value_head_hidden_layer_size=64
         ).init_model()
 
-        fresh_net.train_from_game_log_gen(GameLogDataGenerator('**/game_log_minishogi_1000_*', 1024))
+        fresh_net.train_from_game_log_gen(GameLogDataGenerator('**/game_log_minishogi_*', 1024))
         print(f"Time taken: {time()-start_time}")
 
         if not args.headless:
