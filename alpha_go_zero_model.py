@@ -7,6 +7,9 @@ from tensorflow.keras.regularizers import l2
 
 import glob
 import numpy as np
+import threading
+
+model_lock = threading.Lock()
 
 def rotate_data(data, board_size, rotations):
     x, y0, y1 = data
@@ -76,7 +79,8 @@ class AlphaGoZeroModel:
         return x
 
     def predict(self, input):
-        return self.model.predict(input)
+        with model_lock:
+            return self.model.predict(input)
         
     def init_model(self):
         input_tensor = Input((self.input_board_size, self.input_board_size, self.number_of_input_planes))

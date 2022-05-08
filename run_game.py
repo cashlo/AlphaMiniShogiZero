@@ -138,7 +138,7 @@ def player_1_move():
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         for t in range(number_of_threads):
-            search_tree_clone = AlphaMiniShogiSearchTree(game.clone(), player_1_model,simulation_limit=600)
+            search_tree_clone = AlphaMiniShogiSearchTree(game.clone(), player_1_model,simulation_limit=300)
             futures.append(executor.submit(search_tree_clone.search, step=100, move_window=None))
             thread_trees.append(search_tree_clone)
     

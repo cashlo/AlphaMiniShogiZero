@@ -66,7 +66,7 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
                 futures[t].result()
                 search_tree.merge_children(thread_trees[t])
 
-            move = search_tree.most_visited_child(random=game_steps_count <= 10).from_move
+            move = search_tree.most_visited_child(random=game_steps_count <= 4).from_move
 
             game_log['x'].append(search_tree.encode_input())
             game_log['y'][0].append(search_tree.encode_output())
@@ -159,7 +159,7 @@ if not args.headless:
     from gamewindow import GameWindow
 
 if args.gen_data:
-    sim_limit = 1000
+    sim_limit = 1000//number_of_threads
 
     game_log = {
         'x': [],
