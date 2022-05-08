@@ -10,7 +10,7 @@ import random
 
 class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 
-		def __init__(self, game, model, parent=None, from_move=None, simulation_limit=1500, exploration_constant=20, dirichlet_alpha=0.03, noise_weight=0.50):
+		def __init__(self, game, model, parent=None, from_move=None, simulation_limit=1500, exploration_constant=20, dirichlet_alpha=0.03, noise_weight=0.25):
 			MiniShogiSearchTree.__init__(self, game, parent=parent, from_move=from_move, exploration_constant=exploration_constant)
 			self.simulation_limit = simulation_limit
 			self.model = model

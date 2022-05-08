@@ -100,6 +100,7 @@ class AlphaGoZeroModel:
         import copy
         clone = copy.copy(self)
         clone.model = tf.keras.models.clone_model(self.model)
+        clone.model.set_weights(self.model.get_weights())
         return clone
 
     def load_model(self, model_folder = ''):

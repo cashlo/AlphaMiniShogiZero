@@ -123,7 +123,7 @@ mind_window_2 = GameWindow("Player 2", show_title=False, line_width=4, canvas_si
 
 merged_window = GameWindow("Merged result", show_title=False, line_width=4, canvas_size=400)
 
-number_of_threads = 3
+number_of_threads = 4
 thread_windows = [GameWindow(f"Thread {t}", show_title=False, line_width=4, canvas_size=400) for t in range(number_of_threads)]
 
 
@@ -138,7 +138,7 @@ def player_1_move():
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         for t in range(number_of_threads):
-            search_tree_clone = AlphaMiniShogiSearchTree(game.clone(), player_1_model,simulation_limit=300)
+            search_tree_clone = AlphaMiniShogiSearchTree(game.clone(), player_1_model.clone(),simulation_limit=600)
             futures.append(executor.submit(search_tree_clone.search, step=100, move_window=None))
             thread_trees.append(search_tree_clone)
     
