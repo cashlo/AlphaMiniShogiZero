@@ -10,7 +10,7 @@ import random
 
 class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 
-		def __init__(self, game, model, parent=None, from_move=None, simulation_limit=1500, exploration_constant=20, dirichlet_alpha=0.03, noise_weight=0.25):
+		def __init__(self, game, model, parent=None, from_move=None, simulation_limit=1500, exploration_constant=20, dirichlet_alpha=0.03, noise_weight=0.35):
 			MiniShogiSearchTree.__init__(self, game, parent=parent, from_move=from_move, exploration_constant=exploration_constant)
 			self.simulation_limit = simulation_limit
 			self.model = model
@@ -35,7 +35,7 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 					self.expanded_children[move] = other.expanded_children[move]
 
 
-		def search(self, step=5, move_window=None, tree_window=None):
+		def search(self, step=5, move_window=None, tree_window=None, move_queue=None):
 			simulation_count = 0
 			#past_nodes = []
 			start_time = time()

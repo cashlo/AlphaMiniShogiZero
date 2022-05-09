@@ -12,7 +12,7 @@ import argparse
 import sys
 import concurrent.futures
 
-number_of_threads = 4
+number_of_threads = 2
 
 def backfill_end_reward(game_log, game_steps_count, result, last_player):
     game_reward = [0]*game_steps_count
