@@ -8,14 +8,11 @@ import glob
 import tensorflow as tf
 import concurrent.futures
 import queue
+import functools
+import threading
 
 game = MiniShogi.Game()
 game.setup()
-
-human_move_queue = queue.Queue()
-bot_move_queue = queue.Queue()
-mind_queue = queue.Queue()
-
 
 player_1_model = AlphaGoZeroModel(
         input_board_size=MiniShogi.SIZE,
@@ -63,6 +60,13 @@ if net_files:
 search_tree_1 = AlphaMiniShogiSearchTree(game.clone(), player_1_model,simulation_limit=600)
 search_tree_2 = AlphaMiniShogiSearchTree(game.clone(), player_2_model,simulation_limit=600)
 
+number_of_threads = 3
+thread_windows = []
+thinking_threads = []
+human_move_queues = []
+bot_move_queues = []
+bot_tree_queues = []
+mind_queue = queue.Queue()
 
 
 last_clicked_piece = None
@@ -86,7 +90,9 @@ def on_click(x, y, promotion):
             clicked_move = (last_clicked_piece.pieceType, last_clicked_piece.position, (x, y), promotion)
             if clicked_move in legal_moves:
                 game.make_move(clicked_move)
-                human_move_queue.put(clicked_move)
+                for q in human_move_queues:
+                    q.put(clicked_move)
+                
                 
                 ## search_tree_1 = search_tree_1.create_from_move(clicked_move)
                 # search_tree = search_tree.create_from_move( clicked_move )
@@ -97,7 +103,20 @@ def on_click(x, y, promotion):
                     print("Winner is ", winner)
                     return
     
-                bot_move = bot_move_queue.get()
+
+                bot_trees = [q.get() for q in bot_tree_queues]
+                first_tree = None
+                for t in bot_trees:
+                    if first_tree is None:
+                        first_tree = t
+                    else:
+                        first_tree.merge_children(t)
+
+                bot_move = first_tree.most_visited_child().from_move
+
+                for i, q in enumerate(bot_move_queues):
+                    q.put(bot_move)
+
                 game.make_move(bot_move)
                 window.draw_board(game)
                 window.draw_move(bot_move)
@@ -135,47 +154,55 @@ mind_window_1 = GameWindow("Player 1", show_title=False, line_width=4, canvas_si
 
 # merged_window = GameWindow("Merged result", show_title=False, line_width=4, canvas_size=400)
 
-number_of_threads = 0
-thread_windows = [GameWindow(f"Thread {t}", show_title=False, line_width=4, canvas_size=400) for t in range(number_of_threads)]
 
-def check_mind():
-    try:
-        expanded_children = mind_queue.get(0)
-
-        mind_window_1.draw_board(game)
-        clear_moves = True
-        total_visit = sum(c.visit_count for c in expanded_children.values())
-        for c in expanded_children.values():
-            mind_window_1.draw_move(c.from_move, clear_moves, c.visit_count/total_visit, 10, deep_move=c.expanded_children)
-            clear_moves = False
-        mind_window_1.window.after(1000, check_mind)
-    except queue.Empty:
-        mind_window_1.window.after(1000, check_mind)
-
-mind_window_1.window.after(1000, check_mind)
-
-def think_in_your_turn(my_search_tree):
-    print("Thinking started")
+def think_in_your_turn(my_search_tree, human_move_queue, bot_tree_queue, bot_move_queue, thread_id):
+    print(f"Thinking started for thread {thread_id}")
     while True:
         print("searching...")
         my_search_tree.search(step=50, move_window=None)
-        mind_queue.put(my_search_tree.expanded_children)
+        mind_queue.put( (thread_id, my_search_tree.expanded_children) )
         if not human_move_queue.empty():
             human_move = human_move_queue.get()
             my_search_tree = my_search_tree.create_from_move(human_move)
-            mind_queue.put(my_search_tree.expanded_children)
+            mind_queue.put( (thread_id, my_search_tree.expanded_children) )
             if not my_search_tree.expanded_children:
                 print("unexpected move! thinking more...")
                 my_search_tree.search(step=50, move_window=None)
-            my_search_tree = my_search_tree.most_visited_child()
-            bot_move_queue.put(my_search_tree.from_move)
+            bot_tree_queue.put(my_search_tree)
+            my_search_tree = my_search_tree.create_from_move(bot_move_queue.get())
 
-import threading
-thinking_thread = threading.Thread(
-    target=think_in_your_turn,
-    args=(AlphaMiniShogiSearchTree(game.clone(), player_1_model.clone(),simulation_limit=100),),
-    daemon=True)
-thinking_thread.start()
+
+
+for t in range(number_of_threads):
+    thread_windows.append(GameWindow(f"Thread {t}", show_title=False, line_width=4, canvas_size=400))
+    human_move_queues.append(queue.Queue())
+    bot_move_queues.append(queue.Queue())
+    bot_tree_queues.append(queue.Queue())
+    thinking_thread = threading.Thread(
+        target=think_in_your_turn,
+        args=(AlphaMiniShogiSearchTree(game.clone(), player_1_model.clone(),simulation_limit=100),
+            human_move_queues[-1],
+            bot_tree_queues[-1],
+            bot_move_queues[-1],
+            t),
+        daemon=True)
+    thinking_thread.start()
+
+def check_mind():
+    try:
+        thread_id, expanded_children = mind_queue.get(0)
+
+        thread_windows[thread_id].draw_board(game)
+        clear_moves = True
+        total_visit = sum(c.visit_count for c in expanded_children.values())
+        for c in expanded_children.values():
+            thread_windows[thread_id].draw_move(c.from_move, clear_moves, c.visit_count/total_visit, 10, deep_move=c.expanded_children)
+            clear_moves = False
+        thread_windows[thread_id].window.after(1000, check_mind)
+    except queue.Empty:
+        thread_windows[0].window.after(1000, check_mind)
+
+thread_windows[0].window.after(1000, check_mind)
 
 def player_1_move():
     global search_tree_1

@@ -5,4 +5,3 @@ start py run_training.py --gen-data 1
 start py run_training.py --gen-data 2
 start py run_training.py --gen-data 3
 start py run_training.py --gen-data 4
-start py run_training.py --gen-data 5
