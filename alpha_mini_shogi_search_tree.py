@@ -6,17 +6,36 @@ from collections import defaultdict
 import numpy as np
 import math
 from time import time
+import random
 
 class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 
-		def __init__(self, game, model, parent=None, from_move=None, simulation_limit=1500, exploration_constant=10):
+		def __init__(self, game, model, parent=None, from_move=None, simulation_limit=1500, exploration_constant=20, dirichlet_alpha=0.03, noise_weight=0.35):
 			MiniShogiSearchTree.__init__(self, game, parent=parent, from_move=from_move, exploration_constant=exploration_constant)
 			self.simulation_limit = simulation_limit
 			self.model = model
 			self.policy = None
 			self.reward = 0
+			self.dirichlet_alpha = dirichlet_alpha
+			self.noise_weight = noise_weight
 
-		def search(self, step=5, move_window=None, tree_window=None):
+		def draw_children(self, window):
+			window.draw_board(self.game)
+			clear_moves = True
+			for c in self.expanded_children.values():
+				window.draw_move(c.from_move, clear_moves, c.visit_count/self.visit_count, 10)
+				clear_moves = False
+
+		def merge_children(self, other):
+			self.visit_count += other.visit_count
+			for move in other.expanded_children:
+				if move in self.expanded_children:
+					self.expanded_children[move].merge_children(other.expanded_children[move])
+				else:
+					self.expanded_children[move] = other.expanded_children[move]
+
+
+		def search(self, step=5, move_window=None, tree_window=None, move_queue=None):
 			simulation_count = 0
 			#past_nodes = []
 			start_time = time()
@@ -55,7 +74,7 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 				return max(self.expanded_children.values(), key = lambda c: c.visit_count)
 			child_list = list(self.expanded_children.values())
 			probability_list = np.array([c.visit_count for c in child_list])
-			probability_list = probability_list + probability_list.sum()/10 # Extra Randomness
+			#probability_list = probability_list + probability_list.sum()/10 # Extra Randomness
 			probability_list = probability_list / probability_list.sum()
 			return np.random.choice(child_list, p=probability_list)
 
@@ -114,7 +133,13 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 				return 1
 			policy, reward = self.predict()
 			self.policy = policy
+			self.add_noise_to_policy()
 			return -reward[0] # Negative because it is from the viewpoint of the next mover, good for them is bad for us
+
+		def add_noise_to_policy(self):
+			noise = np.random.dirichlet([self.dirichlet_alpha] * self.model.policy_output_size)
+			self.policy = (1-self.noise_weight)*self.policy + self.noise_weight*noise
+
 
 		def encode_input(self):
 			player_piece             = defaultdict(lambda: [np.zeros((MiniShogi.SIZE, MiniShogi.SIZE)), np.zeros((MiniShogi.SIZE, MiniShogi.SIZE))])

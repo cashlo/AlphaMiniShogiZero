@@ -10,6 +10,9 @@ import glob
 import os
 import argparse
 import sys
+import concurrent.futures
+
+number_of_threads = 2
 
 def backfill_end_reward(game_log, game_steps_count, result, last_player):
     game_reward = [0]*game_steps_count
@@ -26,7 +29,7 @@ def backfill_end_reward(game_log, game_steps_count, result, last_player):
 
 def save_game_log(game_log, sim_limit, file_name=None):
     if not file_name:
-        file_name=f"game_log_minishogi_{sim_limit}.pickle"
+        file_name=f"game_log_minishogi_{sim_limit}_t{number_of_threads}.pickle"
     f = open(file_name, "wb")
     f.write(pickle.dumps(game_log))
     f.close()
@@ -49,7 +52,21 @@ def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_l
         while game.check_game_over() is None:
             # print(search_tree.game)
             start_time = time()
-            move = search_tree.search(step=game_steps_count, move_window=mind_window).from_move
+
+            thread_trees = []
+            futures = []
+
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                for t in range(number_of_threads):
+                    search_tree_clone = AlphaMiniShogiSearchTree(game.clone(), net.clone(),simulation_limit=simulation_limit)
+                    futures.append(executor.submit(search_tree_clone.search, step=game_steps_count, move_window=None))
+                    thread_trees.append(search_tree_clone)
+
+            for t in range(number_of_threads):
+                futures[t].result()
+                search_tree.merge_children(thread_trees[t])
+
+            move = search_tree.most_visited_child(random=game_steps_count <= 4).from_move
 
             game_log['x'].append(search_tree.encode_input())
             game_log['y'][0].append(search_tree.encode_output())
@@ -148,8 +165,8 @@ if args.gen_data:
         'x': [],
         'y': [[],[]]
     }
-    if os.path.isfile(f"game_log_minishogi_{sim_limit}_{args.id}.pickle"):
-        game_log = pickle.loads(open(f"game_log_minishogi_{sim_limit}_{args.id}.pickle", "rb").read())
+    if os.path.isfile(f"game_log_minishogi_{sim_limit}_{args.id}_t{number_of_threads}.pickle"):
+        game_log = pickle.loads(open(f"game_log_minishogi_{sim_limit}_{args.id}_t{number_of_threads}.pickle", "rb").read())
 
     best_net_so_far = AlphaGoZeroModel(
             input_board_size=MiniShogi.SIZE,
@@ -186,7 +203,7 @@ if args.gen_data:
         else:
             gui.set_status("Generating new data...")
         generate_data(game_log, best_net_so_far, 1, gui, None, sim_limit)
-        file_name = f"game_log_minishogi_{sim_limit}_{args.id}.pickle"
+        file_name = f"game_log_minishogi_{sim_limit}_{args.id}_t{number_of_threads}.pickle"
         if args.file:
             file_name = args.file
 
@@ -244,28 +261,8 @@ if args.train_new_net:
             value_head_hidden_layer_size=64
         ).init_model()
 
-        game_log = {
-            'x': [],
-            'y': [[],[]]
-        }
-
-        drop_data_head = 0
-
-        extra_game_log_files = glob.glob(f'game_log_minishogi_1000_*')
-        for file in extra_game_log_files:
-            print(f"Reading {file}")
-            extra_game_log = pickle.loads(open(file, "rb").read())
-            extend_game_log(game_log, extra_game_log, drop_data_head)
-
-        fresh_net.train_from_game_log_gen(GameLogDataGenerator('**/game_log_minishogi_1000_*', 1024))
+        fresh_net.train_from_game_log_gen(GameLogDataGenerator('**/game_log_minishogi_*', 1024))
         print(f"Time taken: {time()-start_time}")
-
-        print("Evaluate old net:")
-        #best_net_so_far.model.summary()
-        print(best_net_so_far.evaluate_from_game_log(game_log))
-        print("Evaluate new net:")
-        #fresh_net.model.summary()
-        print(fresh_net.evaluate_from_game_log(game_log))
 
         if not args.headless:
             gui.set_status("Checking new net performance...")

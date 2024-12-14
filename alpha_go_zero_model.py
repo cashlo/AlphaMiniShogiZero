@@ -7,6 +7,9 @@ from tensorflow.keras.regularizers import l2
 
 import glob
 import numpy as np
+import threading
+
+model_lock = threading.Lock()
 
 def rotate_data(data, board_size, rotations):
     x, y0, y1 = data
@@ -76,6 +79,7 @@ class AlphaGoZeroModel:
         return x
 
     def predict(self, input):
+        #with model_lock:
         return self.model.predict(input)
         
     def init_model(self):
@@ -91,6 +95,13 @@ class AlphaGoZeroModel:
 
         
         return self
+
+    def clone(self):
+        import copy
+        clone = copy.copy(self)
+        clone.model = tf.keras.models.clone_model(self.model)
+        clone.model.set_weights(self.model.get_weights())
+        return clone
 
     def load_model(self, model_folder = ''):
         net_files = glob.glob(f'{model_folder}model_minishogi_*')
@@ -122,5 +133,5 @@ class AlphaGoZeroModel:
         def step_decay(epoch):
             return 2e-4*(0.4**(epoch+1))
         callback = tf.keras.callbacks.LearningRateScheduler(step_decay)
-        self.model.fit_generator(generator=game_log_gen, shuffle=False, epochs=1, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
+        self.model.fit_generator(generator=game_log_gen, shuffle=False, epochs=3, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
 
