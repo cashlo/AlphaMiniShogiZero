@@ -203,14 +203,12 @@ class GameWindow:
 				tags='possible_moves'
 			)
 
-	def draw_move(self, move, clear_old_move = True, score=1, arrow_width=20, offset=(0,0), deep_move=True):
+	def draw_move(self, move, clear_old_move = True, score=1, arrow_width=20, offset=(0,0)):
 		if clear_old_move:
 			self.canvas.delete('move')
 		if move is None:
 			return	
 		
-		color = 'red' if deep_move else 'yellow'
-
 		piece_type, old_position, new_position, promoted = move
 		if old_position is None:
 			self.canvas.create_line(
@@ -220,7 +218,7 @@ class GameWindow:
 				self.margin_size+(new_position[1]+0.5)*self.row_height+offset[1],
 				arrow=LAST,
 				arrowshape=(20,20,6),
-				fill=color,
+				fill='red',
 				width=arrow_width*score,
 				tags='move'
 			)
@@ -232,7 +230,7 @@ class GameWindow:
 				self.margin_size+(new_position[1]+0.5)*self.row_height+offset[1],
 				arrow=LAST,
 				arrowshape=(20,20,6),
-				fill=color,
+				fill='red',
 				width=arrow_width*score,
 				tags='move'
 			)
