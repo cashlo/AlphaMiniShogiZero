@@ -90,8 +90,8 @@ def on_click(x, y, promotion):
             clicked_move = (last_clicked_piece.pieceType, last_clicked_piece.position, (x, y), promotion)
             if clicked_move in legal_moves:
                 game.make_move(clicked_move)
-                for q in human_move_queues:
-                    q.put(clicked_move)
+                #for q in human_move_queues:
+                #    q.put(clicked_move)
                 
                 
                 ## search_tree_1 = search_tree_1.create_from_move(clicked_move)
@@ -102,8 +102,10 @@ def on_click(x, y, promotion):
                 if winner is not None:
                     print("Winner is ", winner)
                     return
+                
     
 
+                """
                 bot_trees = [q.get() for q in bot_tree_queues]
                 first_tree = None
                 for t in bot_trees:
@@ -113,15 +115,17 @@ def on_click(x, y, promotion):
                         first_tree.merge_children(t)
 
                 bot_move = first_tree.most_visited_child().from_move
+                merged_window.draw_tree(first_tree)
 
                 for i, q in enumerate(bot_move_queues):
                     q.put(bot_move)
 
                 game.make_move(bot_move)
                 window.draw_board(game)
-                window.draw_move(bot_move)
+                window.draw_move(bot_move) 
+                """
                 
-                ## player_1_move()
+                player_1_move()
                 # search_tree = search_tree.search(step=100, move_window=mind_window_1)
                 # move = search_tree.from_move
                 # game.make_move(move)
@@ -131,7 +135,7 @@ def on_click(x, y, promotion):
             last_clicked_piece = None
         return
 
-    if p.player == 0:
+    if p.player == 1:
         return
     last_clicked_piece = p
     legal_moves = game.all_legal_moves(p.player)
@@ -152,19 +156,19 @@ window = GameWindow("Mini Shogi", on_click=on_click)
 mind_window_1 = GameWindow("Player 1", show_title=False, line_width=4, canvas_size=400)
 # mind_window_2 = GameWindow("Player 2", show_title=False, line_width=4, canvas_size=400)
 
-# merged_window = GameWindow("Merged result", show_title=False, line_width=4, canvas_size=400)
+merged_window = GameWindow("Merged result", show_title=False, line_width=2, canvas_size=200, tree_window=True)
 
 
 def think_in_your_turn(my_search_tree, human_move_queue, bot_tree_queue, bot_move_queue, thread_id):
     print(f"Thinking started for thread {thread_id}")
     while True:
-        print("searching...")
+        print(f"thread {thread_id} searching...")
         my_search_tree.search(step=50, move_window=None)
-        mind_queue.put( (thread_id, my_search_tree.expanded_children) )
+        mind_queue.put( (thread_id, my_search_tree) )
         if not human_move_queue.empty():
             human_move = human_move_queue.get()
             my_search_tree = my_search_tree.create_from_move(human_move)
-            mind_queue.put( (thread_id, my_search_tree.expanded_children) )
+            mind_queue.put( (thread_id, my_search_tree) )
             if not my_search_tree.expanded_children:
                 print("unexpected move! thinking more...")
                 my_search_tree.search(step=50, move_window=None)
@@ -175,8 +179,9 @@ tree_window_1 = GameWindow("Player 1 Tree", show_title=False, line_width=2, canv
 
 
 
-for t in range(number_of_threads):
-    thread_windows.append(GameWindow(f"Thread {t}", show_title=False, line_width=4, canvas_size=400))
+"""think_in_your_turn
+ for t in range(number_of_threads):
+    thread_windows.append(GameWindow(f"Thread {t}", show_title=False, line_width=2, canvas_size=200, tree_window=True))
     human_move_queues.append(queue.Queue())
     bot_move_queues.append(queue.Queue())
     bot_tree_queues.append(queue.Queue())
@@ -188,46 +193,52 @@ for t in range(number_of_threads):
             bot_move_queues[-1],
             t),
         daemon=True)
-    thinking_thread.start()
+    thinking_thread.start() 
 
 def check_mind():
     try:
-        thread_id, expanded_children = mind_queue.get(0)
+        thread_id, tree_node = mind_queue.get(0)
 
+        print("Drawing tree")
         thread_windows[thread_id].draw_board(game)
-        clear_moves = True
-        total_visit = sum(c.visit_count for c in expanded_children.values())
-        for c in expanded_children.values():
-            thread_windows[thread_id].draw_move(c.from_move, clear_moves, c.visit_count/total_visit, 10, deep_move=c.expanded_children)
-            clear_moves = False
+        thread_windows[thread_id].draw_tree(tree_node)
         thread_windows[thread_id].window.after(1000, check_mind)
     except queue.Empty:
+        print("Mind queue empty")
         thread_windows[0].window.after(1000, check_mind)
 
 thread_windows[0].window.after(1000, check_mind)
+"""
 
+
+for t in range(number_of_threads):
+    thread_windows.append(GameWindow(f"Thread {t}", show_title=False, line_width=2, canvas_size=200, tree_window=True))
+ 
 def player_1_move():
     global search_tree_1
     global search_tree_2
     global mind_window_1
 
-    search_tree_1 = search_tree_1.search(step=100, move_window=mind_window_1, tree_window=tree_window_1)
-
     thread_trees = []
     futures = []
 
+
+    start_time = time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor() as executor:
         for t in range(number_of_threads):
-            search_tree_clone = AlphaMiniShogiSearchTree(game.clone(), player_1_model.clone(),simulation_limit=600)
+            search_tree_clone = AlphaMiniShogiSearchTree(game.clone(), player_1_model.clone(),simulation_limit=600/number_of_threads)
             futures.append(executor.submit(search_tree_clone.search, step=100, move_window=None))
             thread_trees.append(search_tree_clone)
     
     for t in range(number_of_threads):
         futures[t].result()
-        thread_trees[t].draw_children(thread_windows[t])
+        thread_windows[t].draw_tree(thread_trees[t])
         search_tree_1.merge_children(thread_trees[t])
+    end_time = time.perf_counter()
+    print(f"Thinking for  {end_time - start_time:0.4f} seconds")
 
-    search_tree_1.draw_children(merged_window)
+
+    merged_window.draw_tree(search_tree_1)
 
 
     search_tree_1 = search_tree_1.most_visited_child()
@@ -263,7 +274,7 @@ def player_2_move():
         print("Winner: ", winner)
 
 window.draw_board(game)
-# player_1_move()
+player_1_move()
                 
 
 window.mainloop()

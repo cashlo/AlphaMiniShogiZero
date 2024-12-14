@@ -145,7 +145,7 @@ class GameWindow:
 			angle=0  if piece.player else 180
 		)
 
-	def draw_tree(self, current_node, root_node):
+	def draw_tree(self, root_node):
 
 		self.canvas.delete('node_status')
 		first_draw = True

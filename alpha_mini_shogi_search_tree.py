@@ -58,7 +58,7 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 
 				if simulation_count%100 == 0 and tree_window is not None:
 					print("Rollout result: ", reward)
-					tree_window.draw_tree(next_node, self)
+					tree_window.draw_tree(self)
 
 				simulation_count += 1
 				#past_nodes.append(next_node)
@@ -66,7 +66,8 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 			# code.interact(local=locals())
 			# print(f"Number of sumulation: {simulation_count}")
 			# print(f"thinking time: {time()-start_time}")
-			tree_window.draw_tree(next_node, self)
+			if tree_window is not None:
+				tree_window.draw_tree(self)
 			return self.most_visited_child(random=step <= 10)
 
 		def most_visited_child(self, random=False):
