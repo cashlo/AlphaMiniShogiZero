@@ -54,8 +54,8 @@ if net_files:
         print(f"Picked: {picked_model_file}")
         player_2_model.model = tf.keras.models.load_model(picked_model_file)
 
-search_tree_1 = AlphaMiniShogiSearchTree(game.clone(), player_1_model,simulation_limit=600)
-search_tree_2 = AlphaMiniShogiSearchTree(game.clone(), player_2_model,simulation_limit=600)
+search_tree_1 = AlphaMiniShogiSearchTree(game.clone(), player_1_model,simulation_limit=600, exploration_constant=1)
+search_tree_2 = AlphaMiniShogiSearchTree(game.clone(), player_2_model,simulation_limit=600, exploration_constant=1)
 
 
 
@@ -120,13 +120,15 @@ window = GameWindow("Mini Shogi", on_click=on_click)
 mind_window_1 = GameWindow("Player 1", show_title=False, line_width=4, canvas_size=400)
 mind_window_2 = GameWindow("Player 2", show_title=False, line_width=4, canvas_size=400)
 
+tree_window_1 = GameWindow("Player 1 Tree", show_title=False, line_width=2, canvas_size=200, tree_window=True)
+
 
 def player_1_move():
     global search_tree_1
     global search_tree_2
     global mind_window_1
 
-    search_tree_1 = search_tree_1.search(step=100, move_window=mind_window_1)
+    search_tree_1 = search_tree_1.search(step=100, move_window=mind_window_1, tree_window=tree_window_1)
     move = search_tree_1.from_move
     game.make_move(move)
     if not human_player_2:
