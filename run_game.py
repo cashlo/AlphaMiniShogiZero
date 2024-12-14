@@ -57,8 +57,8 @@ if net_files:
         print(f"Picked: {picked_model_file}")
         player_2_model.model = tf.keras.models.load_model(picked_model_file)
 
-search_tree_1 = AlphaMiniShogiSearchTree(game.clone(), player_1_model,simulation_limit=600)
-search_tree_2 = AlphaMiniShogiSearchTree(game.clone(), player_2_model,simulation_limit=600)
+search_tree_1 = AlphaMiniShogiSearchTree(game.clone(), player_1_model,simulation_limit=600, exploration_constant=1)
+search_tree_2 = AlphaMiniShogiSearchTree(game.clone(), player_2_model,simulation_limit=600, exploration_constant=1)
 
 number_of_threads = 3
 thread_windows = []
@@ -171,6 +171,8 @@ def think_in_your_turn(my_search_tree, human_move_queue, bot_tree_queue, bot_mov
             bot_tree_queue.put(my_search_tree)
             my_search_tree = my_search_tree.create_from_move(bot_move_queue.get())
 
+tree_window_1 = GameWindow("Player 1 Tree", show_title=False, line_width=2, canvas_size=200, tree_window=True)
+
 
 
 for t in range(number_of_threads):
@@ -208,6 +210,8 @@ def player_1_move():
     global search_tree_1
     global search_tree_2
     global mind_window_1
+
+    search_tree_1 = search_tree_1.search(step=100, move_window=mind_window_1, tree_window=tree_window_1)
 
     thread_trees = []
     futures = []

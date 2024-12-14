@@ -41,7 +41,14 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 			start_time = time()
 			while simulation_count < self.simulation_limit:
 				next_node = self.pick_next_node(self.exploration_constant)
-				if simulation_count%10 == 0:
+
+				# next_node.board.print()
+				reward = next_node.rollout()
+				# print("Rollout reward: ", reward)
+				next_node.backup(reward)
+				# print("Current reward: ", self.reward)
+
+				if simulation_count%100 == 0:
 					if move_window is not None:
 						move_window.draw_board(self.game)
 						clear_moves = True
@@ -49,19 +56,9 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 							move_window.draw_move(c.from_move, clear_moves, c.visit_count/self.visit_count, 10)
 							clear_moves = False
 
-
-				# next_node.board.print()
-				reward = next_node.rollout()
-				# print("Rollout reward: ", reward)
-				next_node.backup(reward)
-				# print("Current reward: ", self.reward)
-				
-
-
-				if simulation_count%10 == 0 and tree_window is not None:
+				if simulation_count%100 == 0 and tree_window is not None:
 					print("Rollout result: ", reward)
-					tree_window.draw_tree(next_node)
-					input()
+					tree_window.draw_tree(next_node, self)
 
 				simulation_count += 1
 				#past_nodes.append(next_node)
@@ -69,7 +66,8 @@ class AlphaMiniShogiSearchTree(MiniShogiSearchTree):
 			# code.interact(local=locals())
 			# print(f"Number of sumulation: {simulation_count}")
 			# print(f"thinking time: {time()-start_time}")
-			return self.most_visited_child(random=step <= 4)
+			tree_window.draw_tree(next_node, self)
+			return self.most_visited_child(random=step <= 10)
 
 		def most_visited_child(self, random=False):
 			if not random:
