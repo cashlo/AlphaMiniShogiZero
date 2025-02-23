@@ -43,11 +43,43 @@ def setup_puzzle3():
 	
 	return game
 
+def setup_puzzle4(): # puzzle book 6
+	game = MiniShogi.Game()
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   (4, 0), False, 0))
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.PAWN,   (4, 2), False, 0))
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.SILVER, (3, 0), False, 0))
+	
 
-game = setup_puzzle2()
+
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   (0, 4), False, 1))
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.ROOK,   (3, 2), False, 1))
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.BISHOP, (2, 0), False, 1))
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.ROOK,   None, False, 1))
+	
+	
+	return game
+
+def setup_puzzle5(): # puzzle book 7
+	game = MiniShogi.Game()
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   (3, 0), False, 0))
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.PAWN,   (4, 0), False, 0))
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.SILVER, (2, 0), False, 0))
+	
+
+
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   (0, 4), False, 1))
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.ROOK,   (4, 1), False, 1))
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.GOLD,     None, False, 1))
+	game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.SILVER,   None, False, 1))
+	
+	
+	return game
+
+
+game = setup_puzzle5()
 
 window = GameWindow("Puzzle 1")
-tree_window = GameWindow("Tree View", canvas_size=400,tree_window=True)
+tree_window = GameWindow("Tree View", canvas_size=200,tree_window=True)
 mind_window = GameWindow("Mind View", canvas_size=400)
 
 
@@ -69,10 +101,17 @@ if net_files:
 	print(f"Lastest net: {lastest_model_file}")
 #	best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
 
-no_net_search_tree = MiniShogiSearchTree(game.clone())
+no_net_search_tree = MiniShogiSearchTree(game.clone(), simulation_limit=5000)
 
-search_tree = AlphaMiniShogiSearchTree(game.clone(), best_net_so_far, simulation_limit=1000)
-no_net_search_tree = no_net_search_tree.search(move_window=mind_window, tree_window=tree_window) #  
+search_tree = AlphaMiniShogiSearchTree(game.clone(), best_net_so_far, simulation_limit=5000)
+import time
+start_time = time.perf_counter()
+# search_tree = search_tree.search(move_window=mind_window, tree_window=tree_window)
+no_net_search_tree = no_net_search_tree.search(move_window=mind_window, tree_window=tree_window)
+
+end_time = time.perf_counter()
+print(f"Thinking for  {end_time - start_time:0.4f} seconds")
+
 move = search_tree.from_move
 # game.make_move(move)
 window.draw_move(move)

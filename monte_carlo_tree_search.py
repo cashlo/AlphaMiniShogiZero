@@ -25,7 +25,7 @@ class Node:
 			reward = next_node.rollout()
 			next_node.backup(reward)
 			print("Rollout result: ", reward)
-			if simulation_count%10 == 0:
+			if simulation_count%100 == 0:
 				if move_window is not None:
 					move_window.draw_board(self.game)
 					clear_moves = True
@@ -33,7 +33,7 @@ class Node:
 						move_window.draw_move(c.from_move, clear_moves, c.visit_count/self.visit_count, 10)
 						clear_moves = False
 				if tree_window is not None:
-					tree_window.draw_tree(next_node)
+					tree_window.draw_tree(next_node, self)
 			simulation_count += 1
 			#past_nodes.append(next_node)
 		# self.print('')

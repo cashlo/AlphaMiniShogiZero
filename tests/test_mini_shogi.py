@@ -13,6 +13,31 @@ class TestMiniShogi(unittest.TestCase):
 			((MiniShogi.PieceType.KING, (4, 0), False, 0), (MiniShogi.PieceType.PAWN, (4, 1), False, 0), None, None, (MiniShogi.PieceType.ROOK, (4, 4), False, 1))
 		))
 
+	def test_king_no_suicide(self):
+		game = MiniShogi.Game()
+		game.current_player = 0
+		game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   (0, 0), False, 0))
+		game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.BISHOP,   (1, 0), False, 1))
+		game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.ROOK,   (1, 4), False, 1))
+		game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   (4, 4), False, 1))
+
+		self.assertListEqual( game.all_legal_move_list(), [] )
+
+		game = MiniShogi.Game()
+		game.current_player = 0
+		game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   (0, 0), False, 0))
+		game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.GOLD,   (0, 1), False, 0))
+		game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.ROOK,   (0, 4), False, 1))
+		game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.ROOK,   (1, 4), False, 1))
+
+		self.assertListEqual( game.all_legal_move_list(), [(MiniShogi.PieceType.GOLD, (0, 1), (1, 1), False)] )
+
+
+
+		
+
+
+
 	def test_no_repeating_move_ever(self):
 		game = MiniShogi.Game()
 		game.place_piece(MiniShogi.Piece(MiniShogi.PieceType.KING,   (0, 0), False, 0))

@@ -54,7 +54,7 @@ if net_files:
         print(f"Picked: {picked_model_file}")
         player_2_model.model = tf.keras.models.load_model(picked_model_file)
 
-search_tree_1 = AlphaMiniShogiSearchTree(game.clone(), player_1_model,simulation_limit=600, exploration_constant=1)
+search_tree_1 = AlphaMiniShogiSearchTree(game.clone(), player_1_model,simulation_limit=400, exploration_constant=1)
 search_tree_2 = AlphaMiniShogiSearchTree(game.clone(), player_2_model,simulation_limit=600, exploration_constant=1)
 
 
@@ -128,6 +128,8 @@ def player_1_move():
     global search_tree_2
     global mind_window_1
 
+
+    start_time = time.perf_counter()
     search_tree_1 = search_tree_1.search(step=100, move_window=mind_window_1, tree_window=tree_window_1)
     move = search_tree_1.from_move
     game.make_move(move)
@@ -135,6 +137,10 @@ def player_1_move():
         search_tree_2 = search_tree_2.create_from_move(move)
     window.draw_board(game)
     window.draw_move(move)
+    
+    end_time = time.perf_counter()
+    print(f"Thinking for  {end_time - start_time:0.4f} seconds")
+    
     winner = game.check_game_over()
     if winner is None:
         if not human_player_2:

@@ -76,7 +76,7 @@ class AlphaGoZeroModel:
         return x
 
     def predict(self, input):
-        return self.model.predict(input)
+        return self.model.predict(input, verbose=0)
         
     def init_model(self):
         input_tensor = Input((self.input_board_size, self.input_board_size, self.number_of_input_planes))

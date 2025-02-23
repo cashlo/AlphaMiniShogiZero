@@ -143,7 +143,7 @@ class MiniShogi:
 			other_player = 1-player
 			player_king = self.player_kings[player]
 			king_attacking_pieces = self.king_attacking_pieces(player)
-			other_player_attack_area_set = self.board.player_attack_area(other_player, player_king)
+			other_player_attack_area_set = self.board.player_attack_area(other_player, player_king, coverage_check=True)
 
 			possible_moves = set()
 			if king_attacking_pieces:
@@ -202,7 +202,7 @@ class MiniShogi:
 		def place_piece(self, piece):
 			self.board[piece.position[0]][piece.position[1]] = piece
 
-		def player_attack_area(self, player, ignore_piece = None, skip_piece = None):
+		def player_attack_area(self, player, ignore_piece = None, skip_piece = None, coverage_check=False):
 			area = set()
 
 			for f in range(MiniShogi.SIZE):
@@ -214,7 +214,7 @@ class MiniShogi:
 						continue
 					if board_piece == skip_piece:
 						continue
-					area.update(board_piece.get_moves(self, True, ignore_piece))
+					area.update(board_piece.get_moves(self, True, ignore_piece, coverage_check=coverage_check))
 			return area
 
 		def make_move(self, piece, new_position, promoted):
@@ -313,7 +313,7 @@ class MiniShogi:
 			else:
 				return new_position[1] == 0 or self.position[1] == 0
 
-		def get_moves(self, board, position_only = False, ignore_piece = None):
+		def get_moves(self, board, position_only = False, ignore_piece = None, coverage_check=False):
 			valid_moves = set()
 			if self.position is None:
 				if self.pieceType != MiniShogi.PieceType.PAWN:
@@ -358,7 +358,7 @@ class MiniShogi:
 				new_position = ( self.position[0] + m[0], self.position[1] + m[1], False )
 				if not board.is_position_on_board(new_position):
 					continue
-				if board.piece_at(new_position) != None and self.player == board.piece_at(new_position).player:
+				if board.piece_at(new_position) != None and self.player == board.piece_at(new_position).player and not coverage_check:
 					continue
 				valid_moves.add(new_position)
 
@@ -371,13 +371,20 @@ class MiniShogi:
 
 			for m in moveType.long_moves():
 				new_position = ( self.position[0], self.position[1], False )
+				met_piece_of_same_player = False
 				while True:
 					new_position = ( new_position[0] + m[0], new_position[1] + m[1], False )
 					if not board.is_position_on_board(new_position):
 						break
 					capturing_piece = board.piece_at(new_position)
 					if capturing_piece != None and capturing_piece.player == self.player:
-						break
+						if coverage_check:
+							if met_piece_of_same_player:
+								break
+							else:
+								met_piece_of_same_player = True
+						else:
+							break
 					valid_moves.add(new_position)
 
 					# Promotion option

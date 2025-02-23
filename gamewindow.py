@@ -30,7 +30,7 @@ class GameWindow:
 			self.canvas_height = self.canvas_size*8
 			
 
-		self.canvas = Canvas(self.window, width=self.canvas_width, height=self.canvas_height, bg="#964B00")
+		self.canvas = Canvas(self.window, width=self.canvas_width, height=self.canvas_height, bg="#F0F0F0")
 		self.canvas.bind('<Button-1>', self.click)
 		self.line_width=line_width
 		if tree_window:
@@ -155,14 +155,17 @@ class GameWindow:
 		while to_draw:
 			tree_node, offset = to_draw.pop()
 			self.draw_board(tree_node.game, offset=offset, clear_board=first_draw, font_size=15, draw_polygon=False)
-			self.draw_move(tree_node.from_move, clear_old_move=first_draw, arrow_width=5, offset=offset)
-			node_text = f"Reward: {tree_node.reward/tree_node.visit_count:.3f} Visit count: {tree_node.visit_count}"
-			if tree_node.parent:
+			if offset[0] > 0 and offset[1] == 0:
+				self.draw_move(tree_node.from_move, clear_old_move=first_draw, arrow_width=5, offset=offset, fill_color='blue')
+			else:
+				self.draw_move(tree_node.from_move, clear_old_move=first_draw, arrow_width=5, offset=offset)
+			node_text = f"Q: {tree_node.reward/tree_node.visit_count:.3f} N: {tree_node.visit_count}"
+			if tree_node.parent and hasattr(tree_node.parent, "policy"):
 				policy_index = AlphaMiniShogiSearchTree.get_output_index(tree_node.from_move, tree_node.parent.game.current_player)
 				node_text += f" P: {tree_node.parent.policy[policy_index]:.3f}"
 
 			self.canvas.create_text(
-				self.margin_size*2+offset[0],
+				self.margin_size*2+offset[0]+40,
 				10+offset[1],
 				text=node_text,
 				tags ="node_status"
@@ -203,7 +206,7 @@ class GameWindow:
 				tags='possible_moves'
 			)
 
-	def draw_move(self, move, clear_old_move = True, score=1, arrow_width=20, offset=(0,0)):
+	def draw_move(self, move, clear_old_move = True, score=1, arrow_width=20, offset=(0,0), fill_color='red'):
 		if clear_old_move:
 			self.canvas.delete('move')
 		if move is None:
@@ -218,7 +221,7 @@ class GameWindow:
 				self.margin_size+(new_position[1]+0.5)*self.row_height+offset[1],
 				arrow=LAST,
 				arrowshape=(20,20,6),
-				fill='red',
+				fill=fill_color,
 				width=arrow_width*score,
 				tags='move'
 			)
@@ -230,7 +233,7 @@ class GameWindow:
 				self.margin_size+(new_position[1]+0.5)*self.row_height+offset[1],
 				arrow=LAST,
 				arrowshape=(20,20,6),
-				fill='red',
+				fill=fill_color,
 				width=arrow_width*score,
 				tags='move'
 			)
